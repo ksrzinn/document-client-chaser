@@ -36,7 +36,7 @@ it('cascades delete when the owning user is deleted', function () {
 });
 
 it('does not allow user_id to be mass assigned', function () {
-    $client = new Client();
+    $client = new Client;
 
     expect($client->isFillable('user_id'))->toBeFalse();
 });
