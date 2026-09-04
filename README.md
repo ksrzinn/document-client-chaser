@@ -31,8 +31,8 @@ app. No product features yet (see `PRODUCT.md`, `CLAUDE.md`).
    ```
 
 5. Verify:
-   - App: http://localhost:8000/environment-check
-   - Health: http://localhost:8000/up
+   - App: http://localhost:8080/environment-check
+   - Health: http://localhost:8080/up
    - Vite dev server: http://localhost:5173
 
 ## Services
