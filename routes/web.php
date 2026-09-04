@@ -7,3 +7,9 @@ Route::get('/', function () {
 });
 
 Route::get('/environment-check', fn () => inertia('EnvironmentCheck'));
+
+Route::get('/dashboard', function () {
+    return inertia('Dashboard');
+})->middleware('auth')->name('dashboard');
+
+require __DIR__.'/auth.php';
