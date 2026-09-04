@@ -15,7 +15,8 @@ it('belongs to a user', function () {
 it('can be archived without deleting the record', function () {
     $client = Client::factory()->create();
 
-    $client->update(['archived_at' => now()]);
+    $client->archived_at = now();
+    $client->save();
 
     expect(Client::query()->find($client->id))->not->toBeNull();
     expect($client->fresh()->archived_at)->not->toBeNull();

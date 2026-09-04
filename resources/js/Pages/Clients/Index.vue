@@ -58,6 +58,22 @@ defineProps({
                             </tr>
                         </tbody>
                     </table>
+                    <div v-if="clients.links.length > 3" class="mt-4 flex justify-center gap-1 px-6 pb-4">
+                        <template v-for="(link, index) in clients.links" :key="index">
+                            <Link
+                                v-if="link.url"
+                                :href="link.url"
+                                v-html="link.label"
+                                class="rounded px-3 py-1 text-sm"
+                                :class="link.active ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'"
+                            />
+                            <span
+                                v-else
+                                v-html="link.label"
+                                class="rounded px-3 py-1 text-sm text-gray-400"
+                            />
+                        </template>
+                    </div>
                 </div>
             </div>
         </div>

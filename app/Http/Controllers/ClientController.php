@@ -13,7 +13,8 @@ class ClientController extends Controller
     {
         $clients = $request->user()->clients()
             ->orderBy('name')
-            ->paginate(15);
+            ->paginate(15)
+            ->through(fn ($client) => $client->only(['id', 'name', 'email', 'archived_at']));
 
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
@@ -39,7 +40,7 @@ class ClientController extends Controller
         $client = $request->user()->clients()->findOrFail($client);
 
         return Inertia::render('Clients/Show', [
-            'client' => $client,
+            'client' => $client->only(['id', 'name', 'email', 'archived_at']),
         ]);
     }
 
@@ -48,7 +49,7 @@ class ClientController extends Controller
         $client = $request->user()->clients()->findOrFail($client);
 
         return Inertia::render('Clients/Edit', [
-            'client' => $client,
+            'client' => $client->only(['id', 'name', 'email', 'archived_at']),
         ]);
     }
 
@@ -68,7 +69,8 @@ class ClientController extends Controller
         $client = $request->user()->clients()->findOrFail($client);
 
         if ($client->archived_at === null) {
-            $client->update(['archived_at' => now()]);
+            $client->archived_at = now();
+            $client->save();
         }
 
         return redirect()->route('clients.show', $client);

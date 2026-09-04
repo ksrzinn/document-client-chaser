@@ -14,8 +14,9 @@ Route::get('/dashboard', function () {
 })->middleware('auth')->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    Route::resource('clients', ClientController::class)->except(['destroy']);
+    Route::resource('clients', ClientController::class)->except(['destroy'])->whereNumber('client');
     Route::post('clients/{client}/archive', [ClientController::class, 'archive'])
+        ->whereNumber('client')
         ->name('clients.archive');
 });
 

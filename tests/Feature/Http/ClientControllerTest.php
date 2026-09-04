@@ -3,6 +3,15 @@
 use App\Models\Client;
 use App\Models\User;
 
+// --- Route constraints ---
+
+it('returns 404 for a non-numeric client id', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get('/clients/not-a-number')
+        ->assertNotFound();
+});
+
 // --- Normal CRUD ---
 
 it('lets an authenticated user create a client', function () {
