@@ -325,8 +325,10 @@ Initial supported formats:
 * PDF;
 * JPG/JPEG;
 * PNG;
-* DOC/DOCX;
-* XLS/XLSX.
+* DOCX;
+* XLSX.
+
+Legacy binary Office formats (DOC, XLS) are intentionally excluded from the MVP: their real-world files are frequently sniffed by server-side content detection as a generic container type rather than the specific Word/Excel type, which would force accepting a broad "any OLE2 compound file" allowance to support them. DOCX/XLSX (the modern, ZIP-based formats) detect precisely and cover current business use.
 
 Initial maximum file size:
 
