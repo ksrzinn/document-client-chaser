@@ -73,4 +73,15 @@ class DocumentRequest extends Model
 
         return $this->expires_at === null || $this->expires_at->isFuture();
     }
+
+    public static function findPubliclyAccessible(string $token): ?self
+    {
+        $documentRequest = static::where('access_token_hash', hash('sha256', $token))->first();
+
+        if ($documentRequest === null || ! $documentRequest->isPubliclyAccessible()) {
+            return null;
+        }
+
+        return $documentRequest;
+    }
 }

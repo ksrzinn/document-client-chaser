@@ -125,3 +125,24 @@ it('rate limits the public endpoint after repeated requests', function () {
 
     $this->get("/request/{$token}")->assertStatus(429);
 });
+
+it('includes item id, status, and the plaintext token in the public payload', function () {
+    $documentRequest = makePubliclyAccessibleRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create(['name' => 'Bank statement', 'status' => 'requested']);
+    $token = $documentRequest->generateAccessToken();
+
+    $response = $this->get("/request/{$token}");
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('token', $token)
+        ->where('documentRequest.items.0.id', $item->id)
+        ->where('documentRequest.items.0.status', 'requested')
+    );
+});
+
+it('sends a no-referrer policy on the public request page', function () {
+    $documentRequest = makePubliclyAccessibleRequest();
+    $token = $documentRequest->generateAccessToken();
+
+    $this->get("/request/{$token}")->assertHeader('Referrer-Policy', 'no-referrer');
+});

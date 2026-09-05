@@ -98,3 +98,24 @@ it('is publicly accessible when sent, not archived, and not expired', function (
 
     expect($documentRequest->isPubliclyAccessible())->toBeTrue();
 });
+
+it('resolves a publicly accessible request by its plaintext token', function () {
+    $documentRequest = DocumentRequest::factory()->create(['sent_at' => now()]);
+    $token = $documentRequest->generateAccessToken();
+
+    $found = DocumentRequest::findPubliclyAccessible($token);
+
+    expect($found)->not->toBeNull();
+    expect($found->is($documentRequest))->toBeTrue();
+});
+
+it('returns null from findPubliclyAccessible for an unknown token', function () {
+    expect(DocumentRequest::findPubliclyAccessible(str_repeat('a', 40)))->toBeNull();
+});
+
+it('returns null from findPubliclyAccessible for a token whose request is not publicly accessible', function () {
+    $documentRequest = DocumentRequest::factory()->create(['sent_at' => null]);
+    $token = $documentRequest->generateAccessToken();
+
+    expect(DocumentRequest::findPubliclyAccessible($token))->toBeNull();
+});
