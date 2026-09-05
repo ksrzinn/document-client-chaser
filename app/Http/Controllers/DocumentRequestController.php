@@ -140,7 +140,7 @@ class DocumentRequestController extends Controller
                 abort(404);
             }
 
-            $documentRequest->items()->whereNotIn('id', $submittedIds)->delete();
+            $documentRequest->items()->whereNotIn('id', $submittedIds)->whereDoesntHave('uploadedDocuments')->delete();
 
             foreach ($validated['items'] as $item) {
                 if (! empty($item['id'])) {

@@ -266,6 +266,28 @@ it('rejects updating a request to use another tenants client', function () {
     expect($documentRequest->fresh()->client_id)->toBe($clientA->id);
 });
 
+it('does not orphan an item that already has an uploaded document when removed from the update payload', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+    $uploadedItem = DocumentRequestItem::factory()->for($documentRequest)->create(['name' => 'Bank statement']);
+    $otherItem = DocumentRequestItem::factory()->for($documentRequest)->create(['name' => 'ID']);
+    $document = UploadedDocument::factory()
+        ->for($user)->for($client)->for($documentRequest)->for($uploadedItem, 'documentRequestItem')
+        ->create();
+
+    $response = $this->actingAs($user)->put(route('document-requests.update', $documentRequest), [
+        'client_id' => $client->id,
+        'items' => [
+            ['id' => $otherItem->id, 'name' => 'ID'],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    expect(DocumentRequestItem::query()->find($uploadedItem->id))->not->toBeNull();
+    expect($document->fresh()->document_request_item_id)->toBe($uploadedItem->id);
+});
+
 it('rejects updating an item id that belongs to another request', function () {
     $userA = User::factory()->create();
     $clientA = Client::factory()->for($userA)->create();
