@@ -21,8 +21,8 @@ const copyLink = () => {
         onSuccess: (page) => {
             const link = page.props.flash?.accessLink;
             if (link) {
-                navigator.clipboard.writeText(link);
-                alert('Secure link copied to clipboard.');
+                Promise.resolve(navigator.clipboard?.writeText(link)).catch(() => {});
+                window.prompt('Secure link (copy manually if needed):', link);
             } else {
                 alert('A secure link already exists for this request.');
             }
