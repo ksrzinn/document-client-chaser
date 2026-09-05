@@ -2,16 +2,54 @@
 
 namespace App\Http\Requests\Public;
 
+use App\Models\DocumentRequest;
+use App\Models\DocumentRequestItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\File;
 
 class StoreUploadedDocumentRequest extends FormRequest
 {
+    private ?DocumentRequest $documentRequest = null;
+
+    private ?DocumentRequestItem $item = null;
+
     public function authorize(): bool
     {
-        // Authorization is token/item-ownership based, resolved in the controller
-        // (token -> DocumentRequest -> items()), not expressible as a simple policy here.
+        // Authorization is token/item-ownership based (token -> DocumentRequest -> item),
+        // resolved here so it runs BEFORE the validation rules below — in particular
+        // before the content-sniffing File::types() rule, which reads the whole uploaded
+        // file. Resolving here also prevents an invalid token from paying that cost.
+        $documentRequest = DocumentRequest::findPubliclyAccessible((string) $this->route('token'));
+
+        if ($documentRequest === null) {
+            return false;
+        }
+
+        $item = $documentRequest->items()->find($this->route('item'));
+
+        if ($item === null) {
+            return false;
+        }
+
+        $this->documentRequest = $documentRequest;
+        $this->item = $item;
+
         return true;
+    }
+
+    protected function failedAuthorization()
+    {
+        abort(404);
+    }
+
+    public function documentRequest(): DocumentRequest
+    {
+        return $this->documentRequest;
+    }
+
+    public function item(): DocumentRequestItem
+    {
+        return $this->item;
     }
 
     public function rules(): array

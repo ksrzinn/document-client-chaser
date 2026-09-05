@@ -326,6 +326,18 @@ it('rejects an upload with an unknown token', function () {
     ])->assertNotFound();
 });
 
+it('does not run file content validation for an unknown token', function () {
+    $documentRequest = makeUploadableRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create();
+
+    $response = $this->post(uploadUrl(str_repeat('a', 40), $item->id), [
+        'file' => UploadedFile::fake()->create('archive.zip', 100, 'application/zip'),
+    ]);
+
+    $response->assertNotFound();
+    $response->assertSessionDoesntHaveErrors('file');
+});
+
 it('rejects an upload to a request that was never sent', function () {
     $documentRequest = makeUploadableRequest(['sent_at' => null]);
     $item = DocumentRequestItem::factory()->for($documentRequest)->create();

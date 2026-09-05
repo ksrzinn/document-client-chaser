@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Public\StoreUploadedDocumentRequest;
-use App\Models\DocumentRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -12,13 +11,10 @@ use Illuminate\Support\Str;
 
 class UploadedDocumentController extends Controller
 {
-    public function store(StoreUploadedDocumentRequest $request, string $token, string $itemId): RedirectResponse
+    public function store(StoreUploadedDocumentRequest $request): RedirectResponse
     {
-        $documentRequest = DocumentRequest::findPubliclyAccessible($token);
-
-        abort_unless($documentRequest !== null, 404);
-
-        $item = $documentRequest->items()->findOrFail($itemId);
+        $documentRequest = $request->documentRequest();
+        $item = $request->item();
 
         $file = $request->file('file');
         $directory = 'uploads/'.$documentRequest->id;
