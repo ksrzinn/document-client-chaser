@@ -85,6 +85,10 @@ test('password reset link request does not reveal whether the account exists', f
 });
 
 test('the web middleware group enforces CSRF verification', function () {
+    // Middleware groups are synced to the router lazily by the HTTP kernel
+    // (Kernel::handle()), so a request must run once before they're inspectable.
+    $this->get('/login');
+
     $middleware = RouteFacade::getRoutes()->getByName('login')->gatherMiddleware();
 
     expect($middleware)->toContain('web');
