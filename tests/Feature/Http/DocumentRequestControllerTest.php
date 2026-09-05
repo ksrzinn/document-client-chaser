@@ -363,3 +363,50 @@ it('is idempotent when archiving an already-archived request', function () {
 
     expect($documentRequest->fresh()->status)->toBe('archived');
 });
+
+// --- Access link ---
+
+it('lets the owning user generate a secure client link for their own request', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+
+    $response = $this->actingAs($user)->post(route('document-requests.access-link', $documentRequest));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('accessLink');
+    expect($documentRequest->fresh()->access_token_hash)->not->toBeNull();
+});
+
+it('returns the same link on repeated calls instead of rotating the token', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+
+    $this->actingAs($user)->post(route('document-requests.access-link', $documentRequest));
+    $firstHash = $documentRequest->fresh()->access_token_hash;
+
+    $this->actingAs($user)->post(route('document-requests.access-link', $documentRequest));
+    $secondHash = $documentRequest->fresh()->access_token_hash;
+
+    expect($secondHash)->toBe($firstHash);
+});
+
+it('does not let a user generate an access link for another tenant\'s request', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $client = Client::factory()->for($owner)->create();
+    $documentRequest = DocumentRequest::factory()->for($owner)->for($client)->create();
+
+    $this->actingAs($otherUser)->post(route('document-requests.access-link', $documentRequest))
+        ->assertNotFound();
+});
+
+it('redirects unauthenticated users away from the access link route', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+
+    $this->post(route('document-requests.access-link', $documentRequest))
+        ->assertRedirect(route('login'));
+});

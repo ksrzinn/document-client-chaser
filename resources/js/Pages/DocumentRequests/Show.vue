@@ -14,6 +14,21 @@ const props = defineProps({
 const archive = () => {
     router.post(route('document-requests.archive', props.documentRequest.id));
 };
+
+const copyLink = () => {
+    router.post(route('document-requests.access-link', props.documentRequest.id), {}, {
+        preserveScroll: true,
+        onSuccess: (page) => {
+            const link = page.props.flash?.accessLink;
+            if (link) {
+                navigator.clipboard.writeText(link);
+                alert('Secure link copied to clipboard.');
+            } else {
+                alert('A secure link already exists for this request.');
+            }
+        },
+    });
+};
 </script>
 
 <template>
@@ -73,6 +88,7 @@ const archive = () => {
                         >
                             Archive
                         </PrimaryButton>
+                        <PrimaryButton type="button" @click="copyLink">Copy secure link</PrimaryButton>
                     </div>
                 </div>
             </div>

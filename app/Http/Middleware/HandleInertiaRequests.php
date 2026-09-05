@@ -34,6 +34,10 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'flash' => [
+                'accessLink' => fn () => $request->session()->get('accessLink'),
+                'accessLinkExists' => fn () => $request->session()->get('accessLinkExists'),
+            ],
         ];
     }
 }

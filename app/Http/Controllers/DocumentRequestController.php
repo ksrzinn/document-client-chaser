@@ -155,6 +155,21 @@ class DocumentRequestController extends Controller
         return redirect()->route('document-requests.show', $documentRequest);
     }
 
+    public function accessLink(Request $request, string $documentRequest): RedirectResponse
+    {
+        $documentRequest = $request->user()->documentRequests()->findOrFail($documentRequest);
+
+        $token = $documentRequest->access_token_hash === null
+            ? $documentRequest->generateAccessToken()
+            : null;
+
+        if ($token === null) {
+            return back()->with('accessLinkExists', true);
+        }
+
+        return back()->with('accessLink', route('public.document-request.show', $token));
+    }
+
     private function validated(Request $request): array
     {
         return $request->validate([

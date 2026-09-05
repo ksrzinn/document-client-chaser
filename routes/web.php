@@ -32,6 +32,9 @@ Route::middleware('auth')->group(function () {
     Route::post('document-requests/{document_request}/archive', [DocumentRequestController::class, 'archive'])
         ->whereNumber('document_request')
         ->name('document-requests.archive');
+    Route::post('document-requests/{document_request}/access-link', [DocumentRequestController::class, 'accessLink'])
+        ->whereNumber('document_request')
+        ->name('document-requests.access-link');
 });
 
 require __DIR__.'/auth.php';
