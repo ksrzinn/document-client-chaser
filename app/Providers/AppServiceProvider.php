@@ -27,5 +27,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('client-request', function ($request) {
             return Limit::perMinute(30)->by($request->ip());
         });
+
+        RateLimiter::for('client-upload', function ($request) {
+            return [
+                Limit::perMinute(10)->by('upload-req:'.hash('sha256', (string) $request->route('token'))),
+                Limit::perMinute(30)->by('upload-ip:'.$request->ip()),
+            ];
+        });
     }
 }
