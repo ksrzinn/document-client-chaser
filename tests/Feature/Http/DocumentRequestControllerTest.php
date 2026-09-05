@@ -2,6 +2,7 @@
 
 use App\Models\Client;
 use App\Models\DocumentRequest;
+use App\Models\DocumentRequestItem;
 use App\Models\User;
 
 // --- Route constraints ---
@@ -170,4 +171,193 @@ it('lists only the authenticated users document requests', function () {
         ->has('documentRequests.data', 1)
         ->where('documentRequests.data.0.id', $requestA->id)
     );
+});
+
+// --- Show / Edit ---
+
+it('lets an authenticated user view their document request', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+    DocumentRequestItem::factory()->for($documentRequest)->create(['name' => 'Passport']);
+
+    $response = $this->actingAs($user)->get(route('document-requests.show', $documentRequest));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('DocumentRequests/Show')
+        ->where('documentRequest.id', $documentRequest->id)
+        ->where('documentRequest.status', 'draft')
+        ->where('documentRequest.items.0.name', 'Passport')
+    );
+});
+
+it('lets an authenticated user edit their document request', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+
+    $response = $this->actingAs($user)->get(route('document-requests.edit', $documentRequest));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('DocumentRequests/Edit')
+        ->where('documentRequest.id', $documentRequest->id)
+    );
+});
+
+// --- Update ---
+
+it('lets an owner update their request and sync items', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+    $keepItem = DocumentRequestItem::factory()->for($documentRequest)->create(['name' => 'Old name']);
+    $removeItem = DocumentRequestItem::factory()->for($documentRequest)->create(['name' => 'Remove me']);
+
+    $response = $this->actingAs($user)->put(route('document-requests.update', $documentRequest), [
+        'client_id' => $client->id,
+        'message' => 'Updated message',
+        'items' => [
+            ['id' => $keepItem->id, 'name' => 'Renamed'],
+            ['name' => 'Brand new item'],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    expect($documentRequest->fresh()->message)->toBe('Updated message');
+    expect(DocumentRequestItem::find($keepItem->id)->name)->toBe('Renamed');
+    expect(DocumentRequestItem::find($removeItem->id))->toBeNull();
+    expect($documentRequest->fresh()->items)->toHaveCount(2);
+});
+
+it('cannot inject status or user_id through update', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+
+    $this->actingAs($user)->put(route('document-requests.update', $documentRequest), [
+        'client_id' => $client->id,
+        'status' => 'completed',
+        'user_id' => User::factory()->create()->id,
+        'items' => [['name' => 'Invoice']],
+    ]);
+
+    expect($documentRequest->fresh()->status)->toBe('draft');
+    expect($documentRequest->fresh()->user_id)->toBe($user->id);
+});
+
+it('rejects updating a request to use another tenants client', function () {
+    $userA = User::factory()->create();
+    $userB = User::factory()->create();
+    $clientA = Client::factory()->for($userA)->create();
+    $clientB = Client::factory()->for($userB)->create();
+    $documentRequest = DocumentRequest::factory()->for($userA)->for($clientA)->create();
+
+    $response = $this->actingAs($userA)->put(route('document-requests.update', $documentRequest), [
+        'client_id' => $clientB->id,
+        'items' => [['name' => 'Invoice']],
+    ]);
+
+    $response->assertInvalid(['client_id']);
+    expect($documentRequest->fresh()->client_id)->toBe($clientA->id);
+});
+
+it('rejects updating an item id that belongs to another request', function () {
+    $userA = User::factory()->create();
+    $clientA = Client::factory()->for($userA)->create();
+    $requestA = DocumentRequest::factory()->for($userA)->for($clientA)->create();
+
+    $userB = User::factory()->create();
+    $clientB = Client::factory()->for($userB)->create();
+    $requestB = DocumentRequest::factory()->for($userB)->for($clientB)->create();
+    $itemB = DocumentRequestItem::factory()->for($requestB)->create();
+
+    $this->actingAs($userA)->put(route('document-requests.update', $requestA), [
+        'client_id' => $clientA->id,
+        'items' => [['id' => $itemB->id, 'name' => 'Hacked']],
+    ])->assertNotFound();
+
+    expect($itemB->fresh()->name)->not->toBe('Hacked');
+});
+
+// --- Tenant isolation ---
+
+it('returns 404 when a user tries to view another tenants document request', function () {
+    $userA = User::factory()->create();
+    $userB = User::factory()->create();
+    $clientB = Client::factory()->for($userB)->create();
+    $requestB = DocumentRequest::factory()->for($userB)->for($clientB)->create();
+
+    $this->actingAs($userA)->get(route('document-requests.show', $requestB))
+        ->assertNotFound();
+});
+
+it('returns 404 when a user tries to edit another tenants document request', function () {
+    $userA = User::factory()->create();
+    $userB = User::factory()->create();
+    $clientB = Client::factory()->for($userB)->create();
+    $requestB = DocumentRequest::factory()->for($userB)->for($clientB)->create();
+
+    $this->actingAs($userA)->get(route('document-requests.edit', $requestB))
+        ->assertNotFound();
+});
+
+it('returns 404 when a user tries to update another tenants document request', function () {
+    $userA = User::factory()->create();
+    $userB = User::factory()->create();
+    $clientB = Client::factory()->for($userB)->create();
+    $requestB = DocumentRequest::factory()->for($userB)->for($clientB)->create();
+
+    $this->actingAs($userA)->put(route('document-requests.update', $requestB), [
+        'client_id' => $clientB->id,
+        'items' => [['name' => 'Hacked']],
+    ])->assertNotFound();
+});
+
+it('returns 404 when a user tries to archive another tenants document request', function () {
+    $userA = User::factory()->create();
+    $userB = User::factory()->create();
+    $clientB = Client::factory()->for($userB)->create();
+    $requestB = DocumentRequest::factory()->for($userB)->for($clientB)->create();
+
+    $this->actingAs($userA)->post(route('document-requests.archive', $requestB))
+        ->assertNotFound();
+
+    expect($requestB->fresh()->status)->not->toBe('archived');
+});
+
+// --- Archive ---
+
+it('lets an owner archive their document request', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+
+    $response = $this->actingAs($user)->post(route('document-requests.archive', $documentRequest));
+
+    $response->assertRedirect();
+    expect($documentRequest->fresh()->status)->toBe('archived');
+});
+
+it('does not delete the request when archived', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+
+    $this->actingAs($user)->post(route('document-requests.archive', $documentRequest));
+
+    $this->assertDatabaseHas('document_requests', ['id' => $documentRequest->id]);
+});
+
+it('is idempotent when archiving an already-archived request', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+
+    $this->actingAs($user)->post(route('document-requests.archive', $documentRequest));
+    $this->actingAs($user)->post(route('document-requests.archive', $documentRequest))
+        ->assertRedirect();
+
+    expect($documentRequest->fresh()->status)->toBe('archived');
 });
