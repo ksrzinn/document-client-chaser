@@ -45,6 +45,12 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Clients
                                 </NavLink>
+                                <NavLink
+                                    :href="route('document-requests.index')"
+                                    :active="route().current('document-requests.*')"
+                                >
+                                    Document Requests
+                                </NavLink>
                             </div>
                         </div>
 
@@ -152,6 +158,12 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('clients.*')"
                         >
                             Clients
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('document-requests.index')"
+                            :active="route().current('document-requests.*')"
+                        >
+                            Document Requests
                         </ResponsiveNavLink>
                     </div>
 

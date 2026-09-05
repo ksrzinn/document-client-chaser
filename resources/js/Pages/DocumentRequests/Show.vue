@@ -1,0 +1,81 @@
+<script setup>
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+
+const props = defineProps({
+    documentRequest: {
+        type: Object,
+        required: true,
+    },
+});
+
+const archive = () => {
+    router.post(route('document-requests.archive', props.documentRequest.id));
+};
+</script>
+
+<template>
+    <Head title="Document Request" />
+
+    <AuthenticatedLayout>
+        <template #header>
+            <h2 class="text-xl font-semibold leading-tight text-gray-800">
+                Document Request — {{ documentRequest.client.name }}
+            </h2>
+        </template>
+
+        <div class="py-12">
+            <div class="mx-auto max-w-xl sm:px-6 lg:px-8">
+                <div class="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
+                    <dl class="space-y-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Client</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ documentRequest.client.name }} ({{ documentRequest.client.email }})</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Status</dt>
+                            <dd class="mt-1 text-sm text-gray-900 capitalize">{{ documentRequest.status }}</dd>
+                        </div>
+                        <div v-if="documentRequest.message">
+                            <dt class="text-sm font-medium text-gray-500">Message</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ documentRequest.message }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Due date</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ documentRequest.due_at ?? 'None' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Expires</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ documentRequest.expires_at ?? 'None' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Requested documents</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                <ul class="list-disc pl-5">
+                                    <li v-for="item in documentRequest.items" :key="item.id">
+                                        {{ item.name }}
+                                    </li>
+                                </ul>
+                            </dd>
+                        </div>
+                    </dl>
+
+                    <div class="mt-6 flex items-center gap-4">
+                        <Link :href="route('document-requests.edit', documentRequest.id)">
+                            <SecondaryButton type="button">Edit</SecondaryButton>
+                        </Link>
+                        <PrimaryButton
+                            v-if="documentRequest.status !== 'archived'"
+                            type="button"
+                            @click="archive"
+                        >
+                            Archive
+                        </PrimaryButton>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </AuthenticatedLayout>
+</template>
