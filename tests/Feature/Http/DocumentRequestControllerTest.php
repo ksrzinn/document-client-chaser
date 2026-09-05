@@ -178,7 +178,7 @@ it('lists only the authenticated users document requests', function () {
 it('lets an authenticated user view their document request', function () {
     $user = User::factory()->create();
     $client = Client::factory()->for($user)->create();
-    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create(['due_at' => '2026-10-01']);
     DocumentRequestItem::factory()->for($documentRequest)->create(['name' => 'Passport']);
 
     $response = $this->actingAs($user)->get(route('document-requests.show', $documentRequest));
@@ -189,13 +189,14 @@ it('lets an authenticated user view their document request', function () {
         ->where('documentRequest.id', $documentRequest->id)
         ->where('documentRequest.status', 'draft')
         ->where('documentRequest.items.0.name', 'Passport')
+        ->where('documentRequest.due_at', '2026-10-01')
     );
 });
 
 it('lets an authenticated user edit their document request', function () {
     $user = User::factory()->create();
     $client = Client::factory()->for($user)->create();
-    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create(['due_at' => '2026-10-01']);
 
     $response = $this->actingAs($user)->get(route('document-requests.edit', $documentRequest));
 
@@ -203,6 +204,7 @@ it('lets an authenticated user edit their document request', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('DocumentRequests/Edit')
         ->where('documentRequest.id', $documentRequest->id)
+        ->where('documentRequest.due_at', '2026-10-01')
     );
 });
 

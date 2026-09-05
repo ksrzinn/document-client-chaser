@@ -21,6 +21,8 @@ class DocumentRequestController extends Controller
             ->paginate(15)
             ->through(fn (DocumentRequest $documentRequest) => [
                 ...$documentRequest->only(['id', 'status', 'message', 'due_at', 'expires_at', 'created_at', 'items_count']),
+                'due_at' => $documentRequest->due_at?->toDateString(),
+                'expires_at' => $documentRequest->expires_at?->toDateString(),
                 'client' => $documentRequest->client->only(['id', 'name']),
             ]);
 
@@ -74,6 +76,8 @@ class DocumentRequestController extends Controller
         return Inertia::render('DocumentRequests/Show', [
             'documentRequest' => [
                 ...$documentRequest->only(['id', 'status', 'message', 'due_at', 'expires_at', 'created_at', 'updated_at']),
+                'due_at' => $documentRequest->due_at?->toDateString(),
+                'expires_at' => $documentRequest->expires_at?->toDateString(),
                 'client' => $documentRequest->client->only(['id', 'name', 'email']),
                 'items' => $documentRequest->items->map->only(['id', 'name', 'status']),
             ],
@@ -94,6 +98,8 @@ class DocumentRequestController extends Controller
         return Inertia::render('DocumentRequests/Edit', [
             'documentRequest' => [
                 ...$documentRequest->only(['id', 'client_id', 'message', 'due_at', 'expires_at']),
+                'due_at' => $documentRequest->due_at?->toDateString(),
+                'expires_at' => $documentRequest->expires_at?->toDateString(),
                 'items' => $documentRequest->items->map->only(['id', 'name']),
             ],
             'clients' => $clients,

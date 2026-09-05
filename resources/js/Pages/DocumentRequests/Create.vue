@@ -86,7 +86,7 @@ const submit = () => {
 
                         <div class="mt-6">
                             <InputLabel value="Requested documents" />
-                            <div v-for="(item, index) in form.items" :key="index" class="mt-2 flex items-center gap-2">
+                            <div v-for="(item, index) in form.items" :key="`new-${index}`" class="mt-2 flex items-center gap-2">
                                 <TextInput
                                     :id="`items-${index}-name`"
                                     type="text"

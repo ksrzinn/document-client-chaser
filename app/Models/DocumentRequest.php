@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['user_id', 'client_id', 'status', 'message', 'due_at', 'expires_at', 'sent_at', 'completed_at'])]
+#[Fillable(['client_id', 'message', 'due_at', 'expires_at', 'sent_at', 'completed_at'])]
 class DocumentRequest extends Model
 {
     /** @use HasFactory<DocumentRequestFactory> */
