@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DocumentRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -18,6 +19,13 @@ Route::middleware('auth')->group(function () {
     Route::post('clients/{client}/archive', [ClientController::class, 'archive'])
         ->whereNumber('client')
         ->name('clients.archive');
+
+    Route::resource('document-requests', DocumentRequestController::class)
+        ->except(['destroy'])
+        ->whereNumber('document_request');
+    Route::post('document-requests/{document_request}/archive', [DocumentRequestController::class, 'archive'])
+        ->whereNumber('document_request')
+        ->name('document-requests.archive');
 });
 
 require __DIR__.'/auth.php';
