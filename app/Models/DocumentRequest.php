@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\DocumentRequestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -95,5 +96,62 @@ class DocumentRequest extends Model
         }
 
         return $documentRequest;
+    }
+
+    public function scopeEligibleForReminder(Builder $query): Builder
+    {
+        $threshold = now()->subDays((int) config('reminders.interval_days'));
+        $maxCount = (int) config('reminders.max_count');
+
+        return $query
+            ->whereNotNull('sent_at')
+            ->whereNotIn('status', ['archived', 'completed'])
+            ->where(function (Builder $q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->where('reminder_count', '<', $maxCount)
+            ->where(function (Builder $q) use ($threshold) {
+                $q->whereNull('last_reminder_sent_at')->where('sent_at', '<=', $threshold)
+                    ->orWhere('last_reminder_sent_at', '<=', $threshold);
+            })
+            ->whereHas('client', function (Builder $q) {
+                $q->whereNotNull('email')->where('email', '!=', '');
+            })
+            ->whereHas('items', function (Builder $q) {
+                $q->where('status', '!=', 'received');
+            });
+    }
+
+    public function isEligibleForReminder(): bool
+    {
+        if ($this->sent_at === null) {
+            return false;
+        }
+
+        if (in_array($this->status, ['archived', 'completed'], true)) {
+            return false;
+        }
+
+        if ($this->expires_at !== null && $this->expires_at->isPast()) {
+            return false;
+        }
+
+        $email = $this->client?->email;
+        if (blank($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        if (! $this->items()->where('status', '!=', 'received')->exists()) {
+            return false;
+        }
+
+        if ($this->reminder_count >= (int) config('reminders.max_count')) {
+            return false;
+        }
+
+        $threshold = now()->subDays((int) config('reminders.interval_days'));
+        $lastActivity = $this->last_reminder_sent_at ?? $this->sent_at;
+
+        return $lastActivity->lte($threshold);
     }
 }
