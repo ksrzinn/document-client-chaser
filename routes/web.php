@@ -42,6 +42,10 @@ Route::middleware('auth')->group(function () {
     Route::post('document-requests/{document_request}/access-link', [DocumentRequestController::class, 'accessLink'])
         ->whereNumber('document_request')
         ->name('document-requests.access-link');
+    Route::post('document-requests/{document_request}/send', [DocumentRequestController::class, 'send'])
+        ->whereNumber('document_request')
+        ->middleware('throttle:document-request-send')
+        ->name('document-requests.send');
 });
 
 require __DIR__.'/auth.php';

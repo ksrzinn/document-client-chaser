@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\DocumentRequestSent;
+use App\Models\ActivityLog;
 use App\Models\DocumentRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -78,6 +81,7 @@ class DocumentRequestController extends Controller
                 ...$documentRequest->only(['id', 'status', 'message', 'due_at', 'expires_at', 'created_at', 'updated_at']),
                 'due_at' => $documentRequest->due_at?->toDateString(),
                 'expires_at' => $documentRequest->expires_at?->toDateString(),
+                'sent_at' => $documentRequest->sent_at?->toIso8601String(),
                 'client' => $documentRequest->client->only(['id', 'name', 'email']),
                 'items' => $documentRequest->items->map(fn ($item) => [
                     'id' => $item->id,
@@ -179,6 +183,43 @@ class DocumentRequestController extends Controller
         }
 
         return back()->with('accessLink', route('public.document-request.show', $token));
+    }
+
+    public function send(Request $request, string $documentRequest): RedirectResponse
+    {
+        $documentRequest = $request->user()->documentRequests()
+            ->with('client')
+            ->findOrFail($documentRequest);
+
+        abort_if($documentRequest->status === 'archived', 422, 'Archived requests cannot be sent.');
+
+        $email = $documentRequest->client->email;
+        abort_if(blank($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL), 422, 'The client does not have a valid email address.');
+
+        $token = $documentRequest->regenerateAccessToken();
+
+        if ($documentRequest->sent_at === null) {
+            $documentRequest->sent_at = now();
+            $documentRequest->save();
+        }
+
+        Mail::to($email)->queue(new DocumentRequestSent(
+            businessName: $request->user()->name,
+            clientName: $documentRequest->client->name,
+            requestMessage: $documentRequest->message,
+            dueAt: $documentRequest->due_at?->toDateString(),
+            link: route('public.document-request.show', $token),
+        ));
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'client_id' => $documentRequest->client_id,
+            'document_request_id' => $documentRequest->id,
+            'event' => 'request_sent',
+            'metadata' => ['client_email' => $email],
+        ]);
+
+        return back()->with('sent', true);
     }
 
     private function validated(Request $request): array

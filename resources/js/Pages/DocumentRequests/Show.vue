@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({
     documentRequest: {
@@ -13,6 +14,18 @@ const props = defineProps({
 
 const archive = () => {
     router.post(route('document-requests.archive', props.documentRequest.id));
+};
+
+const sending = ref(false);
+
+const send = () => {
+    sending.value = true;
+    router.post(route('document-requests.send', props.documentRequest.id), {}, {
+        preserveScroll: true,
+        onFinish: () => {
+            sending.value = false;
+        },
+    });
 };
 
 const copyLink = () => {
@@ -52,6 +65,10 @@ const copyLink = () => {
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Status</dt>
                             <dd class="mt-1 text-sm text-gray-900 capitalize">{{ documentRequest.status }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Sent</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ documentRequest.sent_at ?? 'Not sent yet' }}</dd>
                         </div>
                         <div v-if="documentRequest.message">
                             <dt class="text-sm font-medium text-gray-500">Message</dt>
@@ -102,6 +119,14 @@ const copyLink = () => {
                             Archive
                         </PrimaryButton>
                         <PrimaryButton type="button" @click="copyLink">Copy secure link</PrimaryButton>
+                        <PrimaryButton
+                            v-if="documentRequest.status !== 'archived'"
+                            type="button"
+                            :disabled="sending"
+                            @click="send"
+                        >
+                            {{ documentRequest.sent_at ? 'Resend' : 'Send' }}
+                        </PrimaryButton>
                     </div>
                 </div>
             </div>

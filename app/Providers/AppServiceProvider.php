@@ -34,5 +34,9 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(30)->by('upload-ip:'.$request->ip()),
             ];
         });
+
+        RateLimiter::for('document-request-send', function ($request) {
+            return Limit::perMinute(10)->by('send-user:'.$request->user()?->id);
+        });
     }
 }

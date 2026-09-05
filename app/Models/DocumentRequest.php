@@ -65,6 +65,16 @@ class DocumentRequest extends Model
         return $token;
     }
 
+    public function regenerateAccessToken(): string
+    {
+        $token = Str::random(40);
+
+        $this->access_token_hash = hash('sha256', $token);
+        $this->save();
+
+        return $token;
+    }
+
     public function isPubliclyAccessible(): bool
     {
         if ($this->sent_at === null || $this->status === 'archived') {
