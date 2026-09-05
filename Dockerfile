@@ -27,6 +27,7 @@ COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr
 RUN install-php-extensions pdo_pgsql pgsql redis bcmath intl zip gd opcache pcntl
 
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/zz-opcache.ini
+COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/zz-uploads.ini
 
 WORKDIR /var/www/html
 COPY --chown=app:app . .
