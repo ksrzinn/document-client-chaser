@@ -68,9 +68,22 @@ const copyLink = () => {
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Requested documents</dt>
                             <dd class="mt-1 text-sm text-gray-900">
-                                <ul class="list-disc pl-5">
+                                <ul class="space-y-2">
                                     <li v-for="item in documentRequest.items" :key="item.id">
-                                        {{ item.name }}
+                                        <div class="flex items-center gap-2">
+                                            <span>{{ item.name }}</span>
+                                            <span
+                                                class="rounded px-2 py-0.5 text-xs font-medium"
+                                                :class="item.status === 'received' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'"
+                                            >
+                                                {{ item.status === 'received' ? 'Received' : 'Missing' }}
+                                            </span>
+                                        </div>
+                                        <ul v-if="item.documents.length" class="mt-1 list-disc pl-5 text-xs text-gray-500">
+                                            <li v-for="document in item.documents" :key="document.id">
+                                                {{ document.original_filename }} ({{ Math.round(document.size / 1024) }} KB, {{ document.mime_type }})
+                                            </li>
+                                        </ul>
                                     </li>
                                 </ul>
                             </dd>

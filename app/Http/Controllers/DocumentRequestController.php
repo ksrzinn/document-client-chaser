@@ -70,7 +70,7 @@ class DocumentRequestController extends Controller
     public function show(Request $request, string $documentRequest): Response
     {
         $documentRequest = $request->user()->documentRequests()
-            ->with(['client', 'items'])
+            ->with(['client', 'items.uploadedDocuments' => fn ($query) => $query->orderByDesc('uploaded_at')])
             ->findOrFail($documentRequest);
 
         return Inertia::render('DocumentRequests/Show', [
@@ -79,7 +79,18 @@ class DocumentRequestController extends Controller
                 'due_at' => $documentRequest->due_at?->toDateString(),
                 'expires_at' => $documentRequest->expires_at?->toDateString(),
                 'client' => $documentRequest->client->only(['id', 'name', 'email']),
-                'items' => $documentRequest->items->map->only(['id', 'name', 'status']),
+                'items' => $documentRequest->items->map(fn ($item) => [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'status' => $item->status,
+                    'documents' => $item->uploadedDocuments->map(fn ($document) => [
+                        'id' => $document->id,
+                        'original_filename' => $document->original_filename,
+                        'mime_type' => $document->mime_type,
+                        'size' => $document->size,
+                        'uploaded_at' => $document->uploaded_at->toIso8601String(),
+                    ])->values(),
+                ]),
             ],
         ]);
     }

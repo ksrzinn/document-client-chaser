@@ -3,6 +3,7 @@
 use App\Models\Client;
 use App\Models\DocumentRequest;
 use App\Models\DocumentRequestItem;
+use App\Models\UploadedDocument;
 use App\Models\User;
 
 // --- Route constraints ---
@@ -409,4 +410,31 @@ it('redirects unauthenticated users away from the access link route', function (
 
     $this->post(route('document-requests.access-link', $documentRequest))
         ->assertRedirect(route('login'));
+});
+
+it('shows each item\'s received documents with safe metadata only', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create(['status' => 'received']);
+    $document = UploadedDocument::factory()
+        ->for($user)->for($client)->for($documentRequest)->for($item, 'documentRequestItem')
+        ->create([
+            'original_filename' => 'statement.pdf',
+            'storage_path' => 'uploads/1/secret-uuid',
+            'mime_type' => 'application/pdf',
+            'size' => 12345,
+        ]);
+
+    $response = $this->actingAs($user)->get("/document-requests/{$documentRequest->id}");
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('documentRequest.items.0.status', 'received')
+        ->where('documentRequest.items.0.documents.0.original_filename', 'statement.pdf')
+        ->where('documentRequest.items.0.documents.0.mime_type', 'application/pdf')
+        ->where('documentRequest.items.0.documents.0.size', 12345)
+        ->has('documentRequest.items.0.documents.0.uploaded_at')
+    );
+
+    $response->assertDontSee($document->storage_path, false);
 });
