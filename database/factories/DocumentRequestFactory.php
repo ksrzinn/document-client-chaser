@@ -23,6 +23,8 @@ class DocumentRequestFactory extends Factory
             'expires_at' => null,
             'sent_at' => null,
             'completed_at' => null,
+            'last_reminder_sent_at' => null,
+            'reminder_count' => 0,
         ];
     }
 }

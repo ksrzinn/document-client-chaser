@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
-#[Fillable(['client_id', 'message', 'due_at', 'expires_at', 'sent_at', 'completed_at'])]
+#[Fillable(['client_id', 'message', 'due_at', 'expires_at', 'sent_at', 'completed_at', 'last_reminder_sent_at', 'reminder_count'])]
 class DocumentRequest extends Model
 {
     /** @use HasFactory<DocumentRequestFactory> */
@@ -23,6 +23,8 @@ class DocumentRequest extends Model
             'expires_at' => 'datetime',
             'sent_at' => 'datetime',
             'completed_at' => 'datetime',
+            'last_reminder_sent_at' => 'datetime',
+            'reminder_count' => 'integer',
         ];
     }
 

@@ -119,3 +119,10 @@ it('returns null from findPubliclyAccessible for a token whose request is not pu
 
     expect(DocumentRequest::findPubliclyAccessible($token))->toBeNull();
 });
+
+it('defaults reminder_count to zero and last_reminder_sent_at to null', function () {
+    $documentRequest = DocumentRequest::factory()->for(User::factory())->for(Client::factory())->create();
+
+    expect($documentRequest->reminder_count)->toBe(0);
+    expect($documentRequest->last_reminder_sent_at)->toBeNull();
+});
