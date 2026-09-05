@@ -27,3 +27,11 @@ it('cascades delete when the owning client is deleted', function () {
 
     expect(DocumentRequest::query()->find($request->id))->toBeNull();
 });
+
+it('allows multiple document requests to have a null access token hash', function () {
+    $requestA = DocumentRequest::factory()->create();
+    $requestB = DocumentRequest::factory()->create();
+
+    expect($requestA->access_token_hash)->toBeNull();
+    expect($requestB->access_token_hash)->toBeNull();
+});
