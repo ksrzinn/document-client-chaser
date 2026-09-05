@@ -3,13 +3,16 @@
 use App\Models\Client;
 use App\Models\DocumentRequest;
 use App\Models\DocumentRequestItem;
+use App\Models\UploadedDocument;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     RateLimiter::clear('client-upload');
+    Storage::fake('local');
 });
 
 function makeUploadableRequest(array $overrides = []): DocumentRequest
@@ -205,6 +208,7 @@ it('rejects an HTML file disguised with a JPG extension', function () {
 
 it('sanitizes dangerous original filenames without breaking storage', function () {
     $documentRequest = makeUploadableRequest();
+    $token = $documentRequest->generateAccessToken();
     $dangerousNames = [
         '../../etc/passwd.pdf',
         '..\\..\\windows\\system32.pdf',
@@ -216,7 +220,6 @@ it('sanitizes dangerous original filenames without breaking storage', function (
 
     foreach ($dangerousNames as $dangerousName) {
         $item = DocumentRequestItem::factory()->for($documentRequest)->create();
-        $token = $documentRequest->generateAccessToken();
 
         $response = $this->post(uploadUrl($token, $item->id), [
             'file' => UploadedFile::fake()->create($dangerousName, 100, 'application/pdf'),
@@ -245,4 +248,201 @@ it('rejects a file over the configured max size', function () {
     ]);
 
     $response->assertSessionHasErrors('file');
+});
+
+it('creates an UploadedDocument with server-derived ownership on a valid upload', function () {
+    $documentRequest = makeUploadableRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create();
+    $token = $documentRequest->generateAccessToken();
+
+    $response = $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ]);
+
+    $response->assertSessionDoesntHaveErrors();
+
+    $document = $documentRequest->uploadedDocuments()->first();
+
+    expect($document)->not->toBeNull();
+    expect($document->user_id)->toBe($documentRequest->user_id);
+    expect($document->client_id)->toBe($documentRequest->client_id);
+    expect($document->document_request_id)->toBe($documentRequest->id);
+    expect($document->document_request_item_id)->toBe($item->id);
+    expect($document->disk)->toBe('local');
+    expect($document->mime_type)->toBe('application/pdf');
+    expect(Storage::disk('local')->exists($document->storage_path))->toBeTrue();
+    expect($document->storage_path)->not->toContain('statement');
+});
+
+it('flips the item status from requested to received on successful upload', function () {
+    $documentRequest = makeUploadableRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create(['status' => 'requested']);
+    $token = $documentRequest->generateAccessToken();
+
+    $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ]);
+
+    expect($item->fresh()->status)->toBe('received');
+});
+
+it('allows a second upload to an already-received item without overwriting the first', function () {
+    $documentRequest = makeUploadableRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create(['status' => 'requested']);
+    $token = $documentRequest->generateAccessToken();
+
+    $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('first.pdf', 100, 'application/pdf'),
+    ]);
+    $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('second.pdf', 100, 'application/pdf'),
+    ]);
+
+    expect($item->uploadedDocuments()->count())->toBe(2);
+    expect($item->fresh()->status)->toBe('received');
+
+    $paths = $item->uploadedDocuments()->pluck('storage_path');
+    expect($paths[0])->not->toBe($paths[1]);
+});
+
+it('works without any authenticated business session', function () {
+    $documentRequest = makeUploadableRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create();
+    $token = $documentRequest->generateAccessToken();
+
+    $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ])->assertSessionDoesntHaveErrors();
+
+    $this->assertGuest();
+});
+
+it('rejects an upload with an unknown token', function () {
+    $documentRequest = makeUploadableRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create();
+
+    $this->post(uploadUrl(str_repeat('a', 40), $item->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ])->assertNotFound();
+});
+
+it('rejects an upload to a request that was never sent', function () {
+    $documentRequest = makeUploadableRequest(['sent_at' => null]);
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create();
+    $token = $documentRequest->generateAccessToken();
+
+    $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ])->assertNotFound();
+});
+
+it('rejects an upload to an archived request', function () {
+    $documentRequest = makeUploadableRequest(['status' => 'archived']);
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create();
+    $token = $documentRequest->generateAccessToken();
+
+    $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ])->assertNotFound();
+});
+
+it('rejects an upload to an expired request', function () {
+    $documentRequest = makeUploadableRequest(['expires_at' => now()->subMinute()]);
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create();
+    $token = $documentRequest->generateAccessToken();
+
+    $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ])->assertNotFound();
+});
+
+it('does not let one request\'s token upload to another request\'s item', function () {
+    $requestA = makeUploadableRequest();
+    $tokenA = $requestA->generateAccessToken();
+
+    $requestB = makeUploadableRequest();
+    $itemB = DocumentRequestItem::factory()->for($requestB)->create();
+
+    $this->post(uploadUrl($tokenA, $itemB->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ])->assertNotFound();
+
+    expect($itemB->fresh()->status)->toBe('requested');
+    expect(UploadedDocument::query()->count())->toBe(0);
+});
+
+it('does not let a valid token upload to an arbitrary item id outside its own request', function () {
+    $documentRequest = makeUploadableRequest();
+    DocumentRequestItem::factory()->for($documentRequest)->create();
+    $token = $documentRequest->generateAccessToken();
+
+    $otherRequest = makeUploadableRequest();
+    $otherItem = DocumentRequestItem::factory()->for($otherRequest)->create();
+
+    $this->post(uploadUrl($token, $otherItem->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ])->assertNotFound();
+});
+
+it('ignores client-supplied ownership and storage fields', function () {
+    $documentRequest = makeUploadableRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create();
+    $token = $documentRequest->generateAccessToken();
+    $otherUser = User::factory()->create();
+
+    $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+        'user_id' => $otherUser->id,
+        'client_id' => 999999,
+        'document_request_id' => 999999,
+        'document_request_item_id' => 999999,
+        'storage_path' => '../../etc/passwd',
+        'disk' => 'public',
+        'status' => 'received',
+        'uploaded_at' => '2000-01-01',
+    ]);
+
+    $document = $documentRequest->uploadedDocuments()->first();
+
+    expect($document->user_id)->toBe($documentRequest->user_id);
+    expect($document->client_id)->toBe($documentRequest->client_id);
+    expect($document->document_request_id)->toBe($documentRequest->id);
+    expect($document->document_request_item_id)->toBe($item->id);
+    expect($document->disk)->toBe('local');
+    expect($document->storage_path)->not->toContain('..');
+});
+
+it('does not expose storage path or internal ids in any response', function () {
+    $documentRequest = makeUploadableRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create();
+    $token = $documentRequest->generateAccessToken();
+
+    $response = $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ]);
+
+    $document = $documentRequest->uploadedDocuments()->first();
+
+    $response->assertDontSee($document->storage_path, false);
+    $response->assertDontSee((string) $documentRequest->user_id, false);
+});
+
+it('deletes the stored file if the database transaction fails', function () {
+    $documentRequest = makeUploadableRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create();
+    $token = $documentRequest->generateAccessToken();
+
+    DB::shouldReceive('transaction')
+        ->once()
+        ->andThrow(new RuntimeException('simulated database failure'));
+
+    $this->withoutExceptionHandling();
+
+    expect(fn () => $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ]))->toThrow(RuntimeException::class);
+
+    $files = Storage::disk('local')->allFiles('uploads/'.$documentRequest->id);
+    expect($files)->toBeEmpty();
+    expect(UploadedDocument::query()->count())->toBe(0);
 });

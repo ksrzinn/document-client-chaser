@@ -3,6 +3,7 @@
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DocumentRequestController;
 use App\Http\Controllers\Public\ClientRequestController;
+use App\Http\Controllers\Public\UploadedDocumentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -15,6 +16,12 @@ Route::get('/request/{token}', [ClientRequestController::class, 'show'])
     ->where('token', '[A-Za-z0-9]{40}')
     ->middleware('throttle:client-request')
     ->name('public.document-request.show');
+
+Route::post('/request/{token}/items/{item}/upload', [UploadedDocumentController::class, 'store'])
+    ->where('token', '[A-Za-z0-9]{40}')
+    ->whereNumber('item')
+    ->middleware('throttle:client-upload')
+    ->name('public.document-request.upload');
 
 Route::get('/dashboard', function () {
     return inertia('Dashboard');
