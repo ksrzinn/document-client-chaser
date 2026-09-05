@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 #[Fillable(['client_id', 'message', 'due_at', 'expires_at', 'sent_at', 'completed_at'])]
 class DocumentRequest extends Model
@@ -48,5 +49,28 @@ class DocumentRequest extends Model
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class);
+    }
+
+    public function generateAccessToken(): string
+    {
+        if ($this->access_token_hash !== null) {
+            throw new \RuntimeException('Access token already generated for this document request.');
+        }
+
+        $token = Str::random(40);
+
+        $this->access_token_hash = hash('sha256', $token);
+        $this->save();
+
+        return $token;
+    }
+
+    public function isPubliclyAccessible(): bool
+    {
+        if ($this->sent_at === null || $this->status === 'archived') {
+            return false;
+        }
+
+        return $this->expires_at === null || $this->expires_at->isFuture();
     }
 }

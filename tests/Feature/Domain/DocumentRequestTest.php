@@ -35,3 +35,66 @@ it('allows multiple document requests to have a null access token hash', functio
     expect($requestA->access_token_hash)->toBeNull();
     expect($requestB->access_token_hash)->toBeNull();
 });
+
+it('generates a 40-character access token and stores only its hash', function () {
+    $documentRequest = DocumentRequest::factory()->create();
+
+    $token = $documentRequest->generateAccessToken();
+
+    expect($token)->toHaveLength(40);
+    expect($documentRequest->access_token_hash)->toBe(hash('sha256', $token));
+    expect($documentRequest->access_token_hash)->not->toBe($token);
+});
+
+it('throws when generating an access token for a request that already has one', function () {
+    $documentRequest = DocumentRequest::factory()->create();
+    $documentRequest->generateAccessToken();
+
+    $documentRequest->generateAccessToken();
+})->throws(RuntimeException::class);
+
+it('is not publicly accessible when never sent', function () {
+    $documentRequest = DocumentRequest::factory()->create(['sent_at' => null]);
+
+    expect($documentRequest->isPubliclyAccessible())->toBeFalse();
+});
+
+it('is not publicly accessible when archived', function () {
+    $documentRequest = DocumentRequest::factory()->create([
+        'sent_at' => now(),
+        'status' => 'archived',
+    ]);
+
+    expect($documentRequest->isPubliclyAccessible())->toBeFalse();
+});
+
+it('is not publicly accessible when expired', function () {
+    $documentRequest = DocumentRequest::factory()->create([
+        'sent_at' => now(),
+        'expires_at' => now()->subMinute(),
+    ]);
+
+    expect($documentRequest->isPubliclyAccessible())->toBeFalse();
+});
+
+it('is publicly accessible exactly at the expiry boundary but not after', function () {
+    $documentRequest = DocumentRequest::factory()->create([
+        'sent_at' => now(),
+        'expires_at' => now()->addSecond(),
+    ]);
+
+    expect($documentRequest->isPubliclyAccessible())->toBeTrue();
+
+    $this->travel(2)->seconds();
+
+    expect($documentRequest->fresh()->isPubliclyAccessible())->toBeFalse();
+});
+
+it('is publicly accessible when sent, not archived, and not expired', function () {
+    $documentRequest = DocumentRequest::factory()->create([
+        'sent_at' => now(),
+        'expires_at' => null,
+    ]);
+
+    expect($documentRequest->isPubliclyAccessible())->toBeTrue();
+});
