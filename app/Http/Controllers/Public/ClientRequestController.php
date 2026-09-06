@@ -20,6 +20,8 @@ class ClientRequestController extends Controller
 
         return Inertia::render('Public/DocumentRequest', [
             'token' => $token,
+            'maxSizeMb' => config('uploads.max_size_kb') / 1024,
+            'allowedExtensions' => 'pdf, jpg, jpeg, png, docx, xlsx',
             'documentRequest' => [
                 'client_name' => $documentRequest->client->name,
                 'message' => $documentRequest->message,

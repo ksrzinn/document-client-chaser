@@ -1,7 +1,8 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import { computed, reactive, watch } from 'vue';
+import { formatDate } from '@/format.js';
 
 const props = defineProps({
     documentRequest: {
@@ -12,17 +13,41 @@ const props = defineProps({
         type: String,
         required: true,
     },
+    maxSizeMb: {
+        type: Number,
+        required: true,
+    },
+    allowedExtensions: {
+        type: String,
+        required: true,
+    },
 });
 
 const state = reactive({});
-props.documentRequest.items.forEach((item) => {
-    state[item.id] = {
-        file: null,
-        uploading: false,
-        error: null,
-        received: item.status === 'received',
-    };
-});
+
+watch(
+    () => props.documentRequest.items,
+    (items) => {
+        for (const item of items) {
+            if (!state[item.id]) {
+                state[item.id] = {
+                    file: null,
+                    uploading: false,
+                    error: null,
+                    received: item.status === 'received',
+                };
+            }
+        }
+    },
+    { immediate: true, deep: false }
+);
+
+const allowedExtensionsAttr = computed(() =>
+    props.allowedExtensions
+        .split(',')
+        .map((ext) => '.' + ext.trim())
+        .join(',')
+);
 
 function onFileChange(itemId, event) {
     state[itemId].file = event.target.files[0] ?? null;
@@ -89,6 +114,10 @@ function upload(itemId) {
             <div class="mt-6 space-y-4">
                 <h2 class="text-sm font-medium text-gray-500">Documents requested</h2>
 
+                <p v-if="documentRequest.status !== 'completed'" class="text-sm text-gray-500">
+                    Accepted formats: {{ allowedExtensions }}. Maximum size: {{ maxSizeMb }} MB per file.
+                </p>
+
                 <div
                     v-for="item in documentRequest.items"
                     :key="item.id"
@@ -104,6 +133,8 @@ function upload(itemId) {
                         <input
                             type="file"
                             class="text-sm text-gray-700"
+                            :accept="allowedExtensionsAttr"
+                            :aria-label="`Upload file for ${item.name}`"
                             @change="onFileChange(item.id, $event)"
                         />
                         <button
@@ -123,8 +154,8 @@ function upload(itemId) {
             </div>
 
             <div class="mt-6 space-y-1 text-sm text-gray-700">
-                <p v-if="documentRequest.due_at">Due: {{ documentRequest.due_at }}</p>
-                <p v-if="documentRequest.expires_at">Request expires: {{ documentRequest.expires_at }}</p>
+                <p v-if="documentRequest.due_at">Due: {{ formatDate(documentRequest.due_at) }}</p>
+                <p v-if="documentRequest.expires_at">Request expires: {{ formatDate(documentRequest.expires_at) }}</p>
             </div>
         </div>
     </GuestLayout>
