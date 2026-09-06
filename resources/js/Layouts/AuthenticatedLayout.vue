@@ -207,6 +207,24 @@ const showingNavigationDropdown = ref(false);
 
             <!-- Page Content -->
             <main>
+                <div
+                    v-if="$page.props.flash.success"
+                    role="status"
+                    class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8"
+                >
+                    <div class="rounded-md bg-green-50 p-4 text-sm text-green-800">
+                        {{ $page.props.flash.success }}
+                    </div>
+                </div>
+                <div
+                    v-if="$page.props.flash.error"
+                    role="alert"
+                    class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8"
+                >
+                    <div class="rounded-md bg-red-50 p-4 text-sm text-red-800">
+                        {{ $page.props.flash.error }}
+                    </div>
+                </div>
                 <slot />
             </main>
         </div>

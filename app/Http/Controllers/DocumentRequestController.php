@@ -192,10 +192,14 @@ class DocumentRequestController extends Controller
             ->with('client')
             ->findOrFail($documentRequest);
 
-        abort_if($documentRequest->status === 'archived', 422, 'Archived requests cannot be sent.');
+        if ($documentRequest->status === 'archived') {
+            return back()->with('error', 'Archived requests cannot be sent.');
+        }
 
         $email = $documentRequest->client->email;
-        abort_if(blank($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL), 422, 'The client does not have a valid email address.');
+        if (blank($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return back()->with('error', 'The client does not have a valid email address.');
+        }
 
         $token = $documentRequest->regenerateAccessToken();
 
@@ -220,7 +224,7 @@ class DocumentRequestController extends Controller
             'metadata' => ['client_email' => $email],
         ]);
 
-        return back()->with('sent', true);
+        return back()->with('success', 'Request sent to the client.');
     }
 
     private function validated(Request $request): array

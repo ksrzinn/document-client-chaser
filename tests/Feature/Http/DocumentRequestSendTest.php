@@ -55,9 +55,10 @@ it('does not let an archived request be sent', function () {
     $client = Client::factory()->for($user)->create(['email' => 'client@example.com']);
     $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create(['status' => 'archived']);
 
-    $this->actingAs($user)->post(route('document-requests.send', $documentRequest))
-        ->assertStatus(422);
+    $response = $this->actingAs($user)->post(route('document-requests.send', $documentRequest));
 
+    $response->assertRedirect();
+    $response->assertSessionHas('error', 'Archived requests cannot be sent.');
     expect($documentRequest->fresh()->sent_at)->toBeNull();
     Mail::assertNothingQueued();
 });
@@ -78,13 +79,27 @@ it('does not let a request be sent when the client has no email', function () {
     $client = Client::factory()->for($user)->create(['email' => '']);
     $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
 
-    $this->actingAs($user)->post(route('document-requests.send', $documentRequest))
-        ->assertStatus(422);
+    $response = $this->actingAs($user)->post(route('document-requests.send', $documentRequest));
 
+    $response->assertRedirect();
+    $response->assertSessionHas('error', 'The client does not have a valid email address.');
     Mail::assertNothingQueued();
 });
 
 // --- Token handling ---
+
+it('redirects back with a flash success message after sending a request', function () {
+    Mail::fake();
+
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create(['email' => 'client@example.com']);
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+
+    $response = $this->actingAs($user)->post(route('document-requests.send', $documentRequest));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success', 'Request sent to the client.');
+});
 
 it('generates an access token when sending a request that has none', function () {
     Mail::fake();

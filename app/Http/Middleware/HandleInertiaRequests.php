@@ -37,6 +37,8 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'accessLink' => fn () => $request->session()->get('accessLink'),
                 'accessLinkExists' => fn () => $request->session()->get('accessLinkExists'),
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
             ],
         ];
     }
