@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentRequestController;
 use App\Http\Controllers\Public\ClientRequestController;
 use App\Http\Controllers\Public\UploadedDocumentController;
@@ -23,9 +24,7 @@ Route::post('/request/{token}/items/{item}/upload', [UploadedDocumentController:
     ->middleware('throttle:client-upload')
     ->name('public.document-request.upload');
 
-Route::get('/dashboard', function () {
-    return inertia('Dashboard');
-})->middleware('auth')->name('dashboard');
+Route::get('/dashboard', DashboardController::class)->middleware('auth')->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::resource('clients', ClientController::class)->except(['destroy'])->whereNumber('client');
