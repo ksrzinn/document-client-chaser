@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { formatDateTime } from '@/format.js';
@@ -14,22 +15,34 @@ const props = defineProps({
 });
 
 const archiveForm = useForm({});
+const confirmingArchive = ref(false);
+const openArchiveConfirm = () => {
+    confirmingArchive.value = true;
+};
 const archive = () => {
-    if (!confirm('Archive this request? The client will no longer be able to access the upload link.')) {
-        return;
-    }
     archiveForm.post(route('document-requests.archive', props.documentRequest.id), {
         preserveScroll: true,
+        onFinish: () => {
+            confirmingArchive.value = false;
+        },
     });
 };
 
 const sendForm = useForm({});
-const send = () => {
-    if (props.documentRequest.sent_at && !confirm('Resend this request? The previous link will stop working.')) {
+const confirmingSend = ref(false);
+const openSendConfirm = () => {
+    if (!props.documentRequest.sent_at) {
+        send();
         return;
     }
+    confirmingSend.value = true;
+};
+const send = () => {
     sendForm.post(route('document-requests.send', props.documentRequest.id), {
         preserveScroll: true,
+        onFinish: () => {
+            confirmingSend.value = false;
+        },
     });
 };
 
@@ -123,7 +136,7 @@ const copyLink = () => {
                             v-if="documentRequest.status !== 'archived'"
                             type="button"
                             :disabled="archiveForm.processing"
-                            @click="archive"
+                            @click="openArchiveConfirm"
                         >
                             Archive
                         </PrimaryButton>
@@ -139,7 +152,7 @@ const copyLink = () => {
                             v-if="documentRequest.status !== 'archived'"
                             type="button"
                             :disabled="sendForm.processing"
-                            @click="send"
+                            @click="openSendConfirm"
                         >
                             {{ documentRequest.sent_at ? 'Resend' : 'Send' }}
                         </PrimaryButton>
@@ -160,4 +173,24 @@ const copyLink = () => {
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <ConfirmDialog
+        :show="confirmingArchive"
+        title="Archive this request?"
+        body="The client will no longer be able to access the upload link."
+        confirm-label="Archive"
+        danger
+        :processing="archiveForm.processing"
+        @confirm="archive"
+        @cancel="confirmingArchive = false"
+    />
+    <ConfirmDialog
+        :show="confirmingSend"
+        title="Resend this request?"
+        body="The previous link will stop working."
+        confirm-label="Resend"
+        :processing="sendForm.processing"
+        @confirm="send"
+        @cancel="confirmingSend = false"
+    />
 </template>

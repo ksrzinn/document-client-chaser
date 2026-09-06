@@ -2,7 +2,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({
     client: {
@@ -12,11 +14,19 @@ const props = defineProps({
 });
 
 const archiveForm = useForm({});
+const confirmingArchive = ref(false);
+
+const openArchiveConfirm = () => {
+    confirmingArchive.value = true;
+};
+
 const archive = () => {
-    if (!confirm('Archive this client? Their document requests will remain but the client can no longer be edited.')) {
-        return;
-    }
-    archiveForm.post(route('clients.archive', props.client.id), { preserveScroll: true });
+    archiveForm.post(route('clients.archive', props.client.id), {
+        preserveScroll: true,
+        onFinish: () => {
+            confirmingArchive.value = false;
+        },
+    });
 };
 </script>
 
@@ -58,7 +68,7 @@ const archive = () => {
                             v-if="!client.archived_at"
                             type="button"
                             :disabled="archiveForm.processing"
-                            @click="archive"
+                            @click="openArchiveConfirm"
                         >
                             Archive
                         </PrimaryButton>
@@ -67,4 +77,15 @@ const archive = () => {
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <ConfirmDialog
+        :show="confirmingArchive"
+        title="Archive this client?"
+        body="Their document requests will remain but the client can no longer be edited."
+        confirm-label="Archive"
+        danger
+        :processing="archiveForm.processing"
+        @confirm="archive"
+        @cancel="confirmingArchive = false"
+    />
 </template>
