@@ -62,7 +62,18 @@ it('does not expose internal or cross-tenant fields on the public page', functio
 });
 
 it('rejects an unknown token with a 404', function () {
-    $this->get('/request/'.str_repeat('a', 40))->assertNotFound();
+    $this->get('/request/'.str_repeat('a', 40))
+        ->assertNotFound()
+        ->assertSee("This link isn't available", false);
+});
+
+it('shows the identical generic message for an archived request token', function () {
+    $documentRequest = makePubliclyAccessibleRequest(['status' => 'archived']);
+    $token = $documentRequest->generateAccessToken();
+
+    $this->get("/request/{$token}")
+        ->assertNotFound()
+        ->assertSee("This link isn't available", false);
 });
 
 it('rejects an empty token with a 404', function () {
