@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ActivityLog;
 use App\Models\Client;
 use App\Models\DocumentRequest;
 use App\Models\DocumentRequestItem;
@@ -457,4 +458,54 @@ it('deletes the stored file if the database transaction fails', function () {
     $files = Storage::disk('local')->allFiles('uploads/'.$documentRequest->id);
     expect($files)->toBeEmpty();
     expect(UploadedDocument::query()->count())->toBe(0);
+});
+
+it('completes the document request when the last required item is uploaded', function () {
+    $documentRequest = makeUploadableRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create(['status' => 'requested']);
+    $token = $documentRequest->generateAccessToken();
+
+    $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ]);
+
+    $fresh = $documentRequest->fresh();
+    expect($fresh->status)->toBe('completed');
+    expect($fresh->completed_at)->not->toBeNull();
+    expect(ActivityLog::where('document_request_id', $documentRequest->id)
+        ->where('event', 'request_completed')->count())->toBe(1);
+});
+
+it('does not complete the document request while another item is still missing', function () {
+    $documentRequest = makeUploadableRequest();
+    $itemA = DocumentRequestItem::factory()->for($documentRequest)->create(['status' => 'requested']);
+    DocumentRequestItem::factory()->for($documentRequest)->create(['status' => 'requested']);
+    $token = $documentRequest->generateAccessToken();
+
+    $this->post(uploadUrl($token, $itemA->id), [
+        'file' => UploadedFile::fake()->create('statement.pdf', 100, 'application/pdf'),
+    ]);
+
+    $fresh = $documentRequest->fresh();
+    expect($fresh->status)->not->toBe('completed');
+    expect($fresh->completed_at)->toBeNull();
+});
+
+it('does not duplicate the completion activity log on a repeat upload to an already-completed request', function () {
+    $documentRequest = makeUploadableRequest();
+    $item = DocumentRequestItem::factory()->for($documentRequest)->create(['status' => 'requested']);
+    $token = $documentRequest->generateAccessToken();
+
+    $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('first.pdf', 100, 'application/pdf'),
+    ]);
+    $this->post(uploadUrl($token, $item->id), [
+        'file' => UploadedFile::fake()->create('second.pdf', 100, 'application/pdf'),
+    ]);
+
+    $fresh = $documentRequest->fresh();
+    expect($fresh->status)->toBe('completed');
+    expect(ActivityLog::where('document_request_id', $documentRequest->id)
+        ->where('event', 'request_completed')->count())->toBe(1);
+    expect($item->uploadedDocuments()->count())->toBe(2);
 });

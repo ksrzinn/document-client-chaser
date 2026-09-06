@@ -42,6 +42,8 @@ class UploadedDocumentController extends Controller
                     $item->status = 'received';
                     $item->save();
                 }
+
+                $documentRequest->markCompletedIfComplete();
             });
         } catch (\Throwable $e) {
             Storage::disk('local')->delete($storagePath);
