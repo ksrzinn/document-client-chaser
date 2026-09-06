@@ -98,6 +98,9 @@ const showingNavigationDropdown = ref(false);
                         <!-- Hamburger -->
                         <div class="-me-2 flex items-center sm:hidden">
                             <button
+                                aria-label="Toggle navigation menu"
+                                :aria-expanded="showingNavigationDropdown"
+                                aria-controls="mobile-nav-panel"
                                 @click="
                                     showingNavigationDropdown =
                                         !showingNavigationDropdown
@@ -140,6 +143,7 @@ const showingNavigationDropdown = ref(false);
 
                 <!-- Responsive Navigation Menu -->
                 <div
+                    id="mobile-nav-panel"
                     :class="{
                         block: showingNavigationDropdown,
                         hidden: !showingNavigationDropdown,

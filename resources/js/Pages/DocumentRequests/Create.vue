@@ -49,7 +49,7 @@ const submit = () => {
                             <select
                                 id="client_id"
                                 v-model="form.client_id"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 required
                             >
                                 <option value="" disabled>Select a client</option>
@@ -65,13 +65,13 @@ const submit = () => {
                             <textarea
                                 id="message"
                                 v-model="form.message"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 rows="3"
                             ></textarea>
                             <InputError class="mt-2" :message="form.errors.message" />
                         </div>
 
-                        <div class="mt-4 grid grid-cols-2 gap-4">
+                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <InputLabel for="due_at" value="Due date (optional)" />
                                 <TextInput id="due_at" type="date" class="mt-1 block w-full" v-model="form.due_at" />
@@ -84,31 +84,35 @@ const submit = () => {
                             </div>
                         </div>
 
-                        <div class="mt-6">
-                            <InputLabel value="Requested documents" />
-                            <div v-for="(item, index) in form.items" :key="`new-${index}`" class="mt-2 flex items-center gap-2">
-                                <TextInput
-                                    :id="`items-${index}-name`"
-                                    type="text"
-                                    class="block w-full"
-                                    v-model="item.name"
-                                    placeholder="e.g. Bank statement"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    class="text-sm text-red-600 hover:text-red-900"
-                                    :disabled="form.items.length === 1"
-                                    @click="removeItem(index)"
-                                >
-                                    Remove
-                                </button>
+                        <fieldset class="mt-6">
+                            <legend class="text-sm font-medium text-gray-700">Requested documents</legend>
+                            <div v-for="(item, index) in form.items" :key="`new-${index}`" class="mt-2">
+                                <div class="flex items-center gap-2">
+                                    <TextInput
+                                        :id="`items-${index}-name`"
+                                        type="text"
+                                        class="block w-full"
+                                        v-model="item.name"
+                                        placeholder="e.g. Bank statement"
+                                        :aria-label="`Document ${index + 1} name`"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        class="px-2 py-2 text-sm text-red-600 hover:text-red-900"
+                                        :disabled="form.items.length === 1"
+                                        @click="removeItem(index)"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                                <InputError class="mt-1" :message="form.errors[`items.${index}.name`]" />
                             </div>
                             <InputError class="mt-2" :message="form.errors.items" />
                             <button type="button" class="mt-2 text-sm text-indigo-600 hover:text-indigo-900" @click="addItem">
                                 + Add document
                             </button>
-                        </div>
+                        </fieldset>
 
                         <div class="mt-6 flex items-center justify-end gap-4">
                             <Link :href="route('document-requests.index')">
