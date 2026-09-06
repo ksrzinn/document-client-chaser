@@ -24,6 +24,7 @@ class DocumentRequestController extends Controller
             ->paginate(15)
             ->through(fn (DocumentRequest $documentRequest) => [
                 ...$documentRequest->only(['id', 'status', 'message', 'due_at', 'expires_at', 'created_at', 'items_count']),
+                'display_status' => $documentRequest->display_status,
                 'due_at' => $documentRequest->due_at?->toDateString(),
                 'expires_at' => $documentRequest->expires_at?->toDateString(),
                 'client' => $documentRequest->client->only(['id', 'name']),
@@ -79,6 +80,7 @@ class DocumentRequestController extends Controller
         return Inertia::render('DocumentRequests/Show', [
             'documentRequest' => [
                 ...$documentRequest->only(['id', 'status', 'message', 'due_at', 'expires_at', 'created_at', 'updated_at']),
+                'display_status' => $documentRequest->display_status,
                 'due_at' => $documentRequest->due_at?->toDateString(),
                 'expires_at' => $documentRequest->expires_at?->toDateString(),
                 'sent_at' => $documentRequest->sent_at?->toIso8601String(),

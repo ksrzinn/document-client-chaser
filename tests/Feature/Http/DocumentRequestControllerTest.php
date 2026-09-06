@@ -194,6 +194,32 @@ it('lets an authenticated user view their document request', function () {
     );
 });
 
+it('includes display_status for each row in the index payload', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)
+        ->create(['sent_at' => now(), 'expires_at' => null, 'status' => 'draft']);
+
+    $response = $this->actingAs($user)->get(route('document-requests.index'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->component('DocumentRequests/Index')
+        ->where('documentRequests.data.0.display_status', 'awaiting_client'));
+});
+
+it('includes display_status in the show payload', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)
+        ->create(['sent_at' => null, 'status' => 'draft']);
+
+    $response = $this->actingAs($user)->get(route('document-requests.show', $documentRequest));
+
+    $response->assertInertia(fn ($page) => $page
+        ->component('DocumentRequests/Show')
+        ->where('documentRequest.display_status', 'draft'));
+});
+
 it('lets an authenticated user edit their document request', function () {
     $user = User::factory()->create();
     $client = Client::factory()->for($user)->create();
