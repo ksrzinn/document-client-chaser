@@ -146,3 +146,12 @@ it('sends a no-referrer policy on the public request page', function () {
 
     $this->get("/request/{$token}")->assertHeader('Referrer-Policy', 'no-referrer');
 });
+
+it('exposes completed status on the public payload once the request is complete', function () {
+    $documentRequest = makePubliclyAccessibleRequest(['status' => 'completed', 'completed_at' => now()]);
+    $token = $documentRequest->generateAccessToken();
+
+    $response = $this->get("/request/{$token}");
+
+    $response->assertInertia(fn ($page) => $page->where('documentRequest.status', 'completed'));
+});

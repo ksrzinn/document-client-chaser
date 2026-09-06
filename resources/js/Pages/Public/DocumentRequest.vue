@@ -79,6 +79,13 @@ function upload(itemId) {
                 {{ documentRequest.message }}
             </p>
 
+            <div
+                v-if="documentRequest.status === 'completed'"
+                class="mt-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-green-800"
+            >
+                All requested documents have been received. Thank you!
+            </div>
+
             <div class="mt-6 space-y-4">
                 <h2 class="text-sm font-medium text-gray-500">Documents requested</h2>
 
