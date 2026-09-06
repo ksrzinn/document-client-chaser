@@ -82,6 +82,7 @@ class DocumentRequestController extends Controller
                 'due_at' => $documentRequest->due_at?->toDateString(),
                 'expires_at' => $documentRequest->expires_at?->toDateString(),
                 'sent_at' => $documentRequest->sent_at?->toIso8601String(),
+                'completed_at' => $documentRequest->completed_at?->toIso8601String(),
                 'client' => $documentRequest->client->only(['id', 'name', 'email']),
                 'items' => $documentRequest->items->map(fn ($item) => [
                     'id' => $item->id,

@@ -460,3 +460,19 @@ it('shows each item\'s received documents with safe metadata only', function () 
 
     $response->assertDontSee($document->storage_path, false);
 });
+
+it('shows the completion timestamp once a request is completed', function () {
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create();
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create([
+        'status' => 'completed',
+        'completed_at' => now(),
+    ]);
+
+    $response = $this->actingAs($user)->get("/document-requests/{$documentRequest->id}");
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('documentRequest.status', 'completed')
+        ->has('documentRequest.completed_at')
+    );
+});

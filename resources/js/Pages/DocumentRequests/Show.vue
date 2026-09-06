@@ -70,6 +70,10 @@ const copyLink = () => {
                             <dt class="text-sm font-medium text-gray-500">Sent</dt>
                             <dd class="mt-1 text-sm text-gray-900">{{ documentRequest.sent_at ?? 'Not sent yet' }}</dd>
                         </div>
+                        <div v-if="documentRequest.completed_at">
+                            <dt class="text-sm font-medium text-gray-500">Completed</dt>
+                            <dd class="mt-1 text-sm font-medium text-green-700">{{ documentRequest.completed_at }}</dd>
+                        </div>
                         <div v-if="documentRequest.message">
                             <dt class="text-sm font-medium text-gray-500">Message</dt>
                             <dd class="mt-1 text-sm text-gray-900">{{ documentRequest.message }}</dd>
