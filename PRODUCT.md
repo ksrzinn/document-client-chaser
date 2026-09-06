@@ -468,7 +468,7 @@ Stop reminders
 * Reminder interval: 2 days (`REMINDER_INTERVAL_DAYS` env var).
 * Maximum reminders per request: 3 (`REMINDER_MAX_COUNT` env var).
 * Reminders continue to be sent after `due_at` passes; only expiration, completion, or archiving stop them.
-* Completion, for reminder purposes, means every requested item has been received — the system does not yet maintain a reliable `completed` status/`completed_at` timestamp, so reminder eligibility checks item receipt directly.
+* Completion, for reminder purposes, means every requested item has been received. The system now maintains a reliable `completed` status/`completed_at` timestamp (`DocumentRequest::markCompletedIfComplete()`, set automatically when the last item is uploaded), and reminder eligibility excludes `completed` requests directly by status as well as by item receipt.
 * Each reminder regenerates the client's access token (same behavior as manually re-sending a request). The previous link stops working once a reminder is sent.
 
 ---
