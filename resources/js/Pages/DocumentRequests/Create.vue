@@ -42,7 +42,14 @@ const submit = () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-xl sm:px-6 lg:px-8">
-                <div class="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
+                <div v-if="clients.length === 0" class="overflow-hidden bg-white p-8 text-center shadow-sm sm:rounded-lg">
+                    <h3 class="text-sm font-medium text-gray-900">You need a client first</h3>
+                    <p class="mt-1 text-sm text-gray-500">Add a client before you can create a document request for them.</p>
+                    <Link :href="route('clients.create')" class="mt-4 inline-block">
+                        <PrimaryButton type="button">Add a client</PrimaryButton>
+                    </Link>
+                </div>
+                <div v-else class="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
                     <form @submit.prevent="submit">
                         <div>
                             <InputLabel for="client_id" value="Client" />

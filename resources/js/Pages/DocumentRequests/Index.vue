@@ -28,7 +28,14 @@ defineProps({
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <div v-if="documentRequests.data.length === 0" class="overflow-hidden bg-white p-8 text-center shadow-sm sm:rounded-lg">
+                    <h3 class="text-sm font-medium text-gray-900">No document requests yet</h3>
+                    <p class="mt-1 text-sm text-gray-500">Create a request to start collecting documents from a client.</p>
+                    <Link :href="route('document-requests.create')" class="mt-4 inline-block">
+                        <PrimaryButton type="button">Create your first request</PrimaryButton>
+                    </Link>
+                </div>
+                <div v-else class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead>
@@ -52,11 +59,6 @@ defineProps({
                                         <Link :href="route('document-requests.show', documentRequest.id)" class="text-indigo-600 hover:text-indigo-900">
                                             View
                                         </Link>
-                                    </td>
-                                </tr>
-                                <tr v-if="documentRequests.data.length === 0">
-                                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
-                                        No document requests yet.
                                     </td>
                                 </tr>
                             </tbody>

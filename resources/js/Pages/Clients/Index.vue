@@ -28,7 +28,14 @@ defineProps({
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <div v-if="clients.data.length === 0" class="overflow-hidden bg-white p-8 text-center shadow-sm sm:rounded-lg">
+                    <h3 class="text-sm font-medium text-gray-900">No clients yet</h3>
+                    <p class="mt-1 text-sm text-gray-500">Add your first client to start sending document requests.</p>
+                    <Link :href="route('clients.create')" class="mt-4 inline-block">
+                        <PrimaryButton type="button">Add your first client</PrimaryButton>
+                    </Link>
+                </div>
+                <div v-else class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead>
@@ -50,11 +57,6 @@ defineProps({
                                         <Link :href="route('clients.show', client.id)" class="text-indigo-600 hover:text-indigo-900">
                                             View
                                         </Link>
-                                    </td>
-                                </tr>
-                                <tr v-if="clients.data.length === 0">
-                                    <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
-                                        No clients yet.
                                     </td>
                                 </tr>
                             </tbody>
