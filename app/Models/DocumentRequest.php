@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 #[Fillable(['client_id', 'message', 'due_at', 'expires_at', 'sent_at', 'completed_at', 'last_reminder_sent_at', 'reminder_count'])]
@@ -153,5 +154,64 @@ class DocumentRequest extends Model
         $lastActivity = $this->last_reminder_sent_at ?? $this->sent_at;
 
         return $lastActivity->lte($threshold);
+    }
+
+    public function isComplete(): bool
+    {
+        return $this->items()->exists()
+            && ! $this->items()->where('status', '!=', 'received')->exists();
+    }
+
+    /**
+     * Transition this request to `completed` if every item is `received`.
+     *
+     * Self-contained and safe to call standalone or nested inside an existing
+     * transaction (e.g. the public upload transaction): it locks its own row
+     * with SELECT ... FOR UPDATE before re-checking state, which is what makes
+     * the transition race-free across two concurrent uploads to different
+     * items of the same request. Two invariants this depends on:
+     *
+     *  - The item's own status write must already be part of the same
+     *    transaction that calls this method, and must happen *before* this
+     *    method is called, so the lock's post-acquisition read observes it.
+     *  - Postgres's default READ COMMITTED isolation gives each statement a
+     *    fresh snapshot once the row lock is acquired by the previous holder's
+     *    commit. Under REPEATABLE READ this method would instead raise a
+     *    serialization failure on the lock (a loud error, not a silent miss) —
+     *    do not raise the isolation level without revisiting this.
+     */
+    public function markCompletedIfComplete(): bool
+    {
+        return DB::transaction(function () {
+            $locked = self::whereKey($this->id)->lockForUpdate()->first();
+
+            if ($locked === null || in_array($locked->status, ['completed', 'archived'], true)) {
+                return false;
+            }
+
+            if (! $locked->isComplete()) {
+                return false;
+            }
+
+            $now = now();
+            $locked->status = 'completed';
+            $locked->completed_at = $now;
+            $locked->save();
+
+            ActivityLog::create([
+                'user_id' => $locked->user_id,
+                'client_id' => $locked->client_id,
+                'document_request_id' => $locked->id,
+                'event' => 'request_completed',
+                'metadata' => [],
+            ]);
+
+            $this->status = $locked->status;
+            $this->completed_at = $locked->completed_at;
+            $this->syncOriginalAttribute('status');
+            $this->syncOriginalAttribute('completed_at');
+
+            return true;
+        });
     }
 }
