@@ -162,6 +162,27 @@ class DocumentRequest extends Model
             && ! $this->items()->where('status', '!=', 'received')->exists();
     }
 
+    public function getDisplayStatusAttribute(): string
+    {
+        if ($this->status === 'archived') {
+            return 'archived';
+        }
+
+        if ($this->status === 'completed') {
+            return 'completed';
+        }
+
+        if ($this->sent_at === null) {
+            return 'draft';
+        }
+
+        if ($this->expires_at !== null && $this->expires_at->isPast()) {
+            return 'expired';
+        }
+
+        return 'awaiting_client';
+    }
+
     /**
      * Transition this request to `completed` if every item is `received`.
      *
