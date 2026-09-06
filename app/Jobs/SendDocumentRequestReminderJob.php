@@ -45,6 +45,7 @@ class SendDocumentRequestReminderJob implements ShouldBeUnique, ShouldQueue
 
         $claimed = DB::table('document_requests')
             ->where('id', $documentRequest->id)
+            ->whereNotIn('status', ['archived', 'completed'])
             ->where('reminder_count', '<', $maxCount)
             ->where(function ($query) use ($threshold) {
                 $query->whereNull('last_reminder_sent_at')->orWhere('last_reminder_sent_at', '<=', $threshold);

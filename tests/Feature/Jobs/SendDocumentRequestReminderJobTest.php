@@ -139,3 +139,20 @@ it('the atomic claim update only affects one row even under a raw concurrent rac
     expect($affected2)->toBe(0);
     expect($documentRequest->fresh()->reminder_count)->toBe(1);
 });
+
+it('the atomic claim update does not claim an already-completed request even if counters would otherwise qualify', function () {
+    $documentRequest = makeSendableRequest(['status' => 'completed', 'completed_at' => now()]);
+
+    $threshold = now()->subDays((int) config('reminders.interval_days'));
+
+    $affected = DB::table('document_requests')
+        ->where('id', $documentRequest->id)
+        ->whereNotIn('status', ['archived', 'completed'])
+        ->where('reminder_count', '<', (int) config('reminders.max_count'))
+        ->where(function ($q) use ($threshold) {
+            $q->whereNull('last_reminder_sent_at')->orWhere('last_reminder_sent_at', '<=', $threshold);
+        })
+        ->update(['reminder_count' => DB::raw('reminder_count + 1'), 'last_reminder_sent_at' => now()]);
+
+    expect($affected)->toBe(0);
+});
