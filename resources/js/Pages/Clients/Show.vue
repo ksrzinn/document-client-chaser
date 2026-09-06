@@ -2,7 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     client: {
@@ -11,8 +11,12 @@ const props = defineProps({
     },
 });
 
+const archiveForm = useForm({});
 const archive = () => {
-    router.post(route('clients.archive', props.client.id));
+    if (!confirm('Archive this client? Their document requests will remain but the client can no longer be edited.')) {
+        return;
+    }
+    archiveForm.post(route('clients.archive', props.client.id), { preserveScroll: true });
 };
 </script>
 
@@ -53,6 +57,7 @@ const archive = () => {
                         <PrimaryButton
                             v-if="!client.archived_at"
                             type="button"
+                            :disabled="archiveForm.processing"
                             @click="archive"
                         >
                             Archive

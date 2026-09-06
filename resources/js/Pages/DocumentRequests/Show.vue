@@ -2,7 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -12,32 +12,35 @@ const props = defineProps({
     },
 });
 
+const archiveForm = useForm({});
 const archive = () => {
-    router.post(route('document-requests.archive', props.documentRequest.id));
-};
-
-const sending = ref(false);
-
-const send = () => {
-    sending.value = true;
-    router.post(route('document-requests.send', props.documentRequest.id), {}, {
+    if (!confirm('Archive this request? The client will no longer be able to access the upload link.')) {
+        return;
+    }
+    archiveForm.post(route('document-requests.archive', props.documentRequest.id), {
         preserveScroll: true,
-        onFinish: () => {
-            sending.value = false;
-        },
     });
 };
 
-const copyLink = () => {
-    router.post(route('document-requests.access-link', props.documentRequest.id), {}, {
+const sendForm = useForm({});
+const send = () => {
+    if (props.documentRequest.sent_at && !confirm('Resend this request? The previous link will stop working.')) {
+        return;
+    }
+    sendForm.post(route('document-requests.send', props.documentRequest.id), {
         preserveScroll: true,
-        onSuccess: (page) => {
-            const link = page.props.flash?.accessLink;
-            if (link) {
-                Promise.resolve(navigator.clipboard?.writeText(link)).catch(() => {});
-                window.prompt('Secure link (copy manually if needed):', link);
-            } else {
-                alert('A secure link already exists for this request.');
+    });
+};
+
+const copyLinkForm = useForm({});
+const copiedLink = ref(null);
+const copyLink = () => {
+    copyLinkForm.post(route('document-requests.access-link', props.documentRequest.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            copiedLink.value = usePage().props.flash.accessLink ?? null;
+            if (copiedLink.value) {
+                navigator.clipboard?.writeText(copiedLink.value).catch(() => {});
             }
         },
     });
@@ -111,27 +114,47 @@ const copyLink = () => {
                         </div>
                     </dl>
 
-                    <div class="mt-6 flex items-center gap-4">
+                    <div class="mt-6 flex flex-wrap items-center gap-4">
                         <Link :href="route('document-requests.edit', documentRequest.id)">
                             <SecondaryButton type="button">Edit</SecondaryButton>
                         </Link>
                         <PrimaryButton
                             v-if="documentRequest.status !== 'archived'"
                             type="button"
+                            :disabled="archiveForm.processing"
                             @click="archive"
                         >
                             Archive
                         </PrimaryButton>
-                        <PrimaryButton type="button" @click="copyLink">Copy secure link</PrimaryButton>
                         <PrimaryButton
                             v-if="documentRequest.status !== 'archived'"
                             type="button"
-                            :disabled="sending"
+                            :disabled="copyLinkForm.processing"
+                            @click="copyLink"
+                        >
+                            Copy secure link
+                        </PrimaryButton>
+                        <PrimaryButton
+                            v-if="documentRequest.status !== 'archived'"
+                            type="button"
+                            :disabled="sendForm.processing"
                             @click="send"
                         >
                             {{ documentRequest.sent_at ? 'Resend' : 'Send' }}
                         </PrimaryButton>
                     </div>
+                    <div v-if="copiedLink" class="mt-2 flex items-center gap-2">
+                        <input
+                            type="text"
+                            readonly
+                            :value="copiedLink"
+                            class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            @focus="$event.target.select()"
+                        />
+                    </div>
+                    <p v-if="$page.props.flash.accessLinkExists && !copiedLink" class="mt-2 text-sm text-gray-600">
+                        A secure link already exists for this request.
+                    </p>
                 </div>
             </div>
         </div>
