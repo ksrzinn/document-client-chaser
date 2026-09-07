@@ -52,6 +52,9 @@ const openSendConfirm = () => {
 const send = () => {
     sendForm.post(route('document-requests.send', props.documentRequest.id), {
         preserveScroll: true,
+        onSuccess: () => {
+            copiedLink.value = usePage().props.flash.accessLink ?? null;
+        },
         onFinish: () => {
             confirmingSend.value = false;
         },

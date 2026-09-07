@@ -25,6 +25,23 @@ it('lets an authenticated user send their own request', function () {
     Mail::assertQueued(DocumentRequestSent::class, fn ($mail) => $mail->hasTo('client@example.com'));
 });
 
+it('flashes the secure link back to the sender so it can be copied without a second request', function () {
+    Mail::fake();
+
+    $user = User::factory()->create();
+    $client = Client::factory()->for($user)->create(['email' => 'client@example.com']);
+    $documentRequest = DocumentRequest::factory()->for($user)->for($client)->create();
+
+    $response = $this->actingAs($user)->post(route('document-requests.send', $documentRequest));
+
+    $response->assertSessionHas('accessLink');
+    $link = session('accessLink');
+    expect($link)->toContain('/request/');
+
+    // The flashed link must actually resolve to this same request, unauthenticated.
+    $this->get($link)->assertOk();
+});
+
 it('does not let a user send another tenant\'s request', function () {
     Mail::fake();
 

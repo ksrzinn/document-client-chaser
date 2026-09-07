@@ -226,7 +226,9 @@ class DocumentRequestController extends Controller
             'metadata' => ['client_email' => $email],
         ]);
 
-        return back()->with('success', 'Request sent to the client.');
+        return back()
+            ->with('success', 'Request sent to the client.')
+            ->with('accessLink', route('public.document-request.show', $token));
     }
 
     private function validated(Request $request): array
