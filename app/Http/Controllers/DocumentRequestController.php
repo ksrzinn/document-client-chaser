@@ -40,7 +40,7 @@ class DocumentRequestController extends Controller
         $clients = $request->user()->clients()
             ->orderBy('name')
             ->get()
-            ->map->only(['id', 'name']);
+            ->map->only(['id', 'name', 'email']);
 
         return Inertia::render('DocumentRequests/Create', [
             'clients' => $clients,
@@ -111,7 +111,7 @@ class DocumentRequestController extends Controller
         $clients = $request->user()->clients()
             ->orderBy('name')
             ->get()
-            ->map->only(['id', 'name']);
+            ->map->only(['id', 'name', 'email']);
 
         return Inertia::render('DocumentRequests/Edit', [
             'documentRequest' => [
