@@ -179,6 +179,14 @@ const copyLink = () => {
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="flex-none"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg>
                             <span class="min-w-0 flex-1 truncate text-sm">{{ document.original_filename }}</span>
                             <span class="flex-none text-xs text-steel-600">{{ Math.round(document.size / 1024) }} KB</span>
+                            <a
+                                :href="route('document-requests.documents.download', [documentRequest.id, document.id])"
+                                class="flex-none inline-flex items-center gap-1 rounded-control px-2 py-1 text-xs font-medium text-accent-700 hover:bg-white hover:text-accent-900"
+                                :aria-label="`Download ${document.original_filename}`"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" /></svg>
+                                Download
+                            </a>
                         </div>
                         <p v-if="item.status !== 'received'" class="ml-9 mt-2 text-xs text-steel-600">Nothing uploaded yet.</p>
                     </div>
