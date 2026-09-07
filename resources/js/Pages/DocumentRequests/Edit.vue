@@ -50,6 +50,8 @@ const selectedClient = computed(() => props.clients.find((c) => String(c.id) ===
             Document request
         </Link>
 
+        <h1 class="mb-5 font-heading text-2xl text-ink">Edit document request</h1>
+
         <div class="flex flex-wrap items-start gap-5">
             <Card class="min-w-0 flex-1 basis-[380px] p-5">
                 <form @submit.prevent="submit" class="flex flex-col gap-[18px]">
