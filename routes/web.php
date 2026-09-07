@@ -8,7 +8,7 @@ use App\Http\Controllers\Public\UploadedDocumentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect('/environment-check');
+    return redirect()->route('login');
 });
 
 Route::get('/environment-check', fn () => inertia('EnvironmentCheck'));
