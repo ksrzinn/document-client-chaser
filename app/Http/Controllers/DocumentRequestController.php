@@ -5,13 +5,16 @@ namespace App\Http\Controllers;
 use App\Mail\DocumentRequestSent;
 use App\Models\ActivityLog;
 use App\Models\DocumentRequest;
+use App\Models\UploadedDocument;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentRequestController extends Controller
 {
@@ -187,6 +190,27 @@ class DocumentRequestController extends Controller
         }
 
         return back()->with('accessLink', route('public.document-request.show', $token));
+    }
+
+    public function downloadDocument(Request $request, string $documentRequest, string $document): StreamedResponse
+    {
+        $documentRequest = $request->user()->documentRequests()->findOrFail($documentRequest);
+
+        /** @var UploadedDocument $document */
+        $document = $documentRequest->uploadedDocuments()->findOrFail($document);
+
+        $disk = Storage::disk($document->disk);
+
+        abort_unless($disk->exists($document->storage_path), 404);
+
+        return $disk->download(
+            $document->storage_path,
+            basename($document->original_filename),
+            [
+                'Content-Type' => $document->mime_type ?: 'application/octet-stream',
+                'X-Content-Type-Options' => 'nosniff',
+            ]
+        );
     }
 
     public function send(Request $request, string $documentRequest): RedirectResponse

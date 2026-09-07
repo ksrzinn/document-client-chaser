@@ -41,6 +41,10 @@ Route::middleware('auth')->group(function () {
     Route::post('document-requests/{document_request}/access-link', [DocumentRequestController::class, 'accessLink'])
         ->whereNumber('document_request')
         ->name('document-requests.access-link');
+    Route::get('document-requests/{document_request}/documents/{document}/download', [DocumentRequestController::class, 'downloadDocument'])
+        ->whereNumber('document_request')
+        ->whereNumber('document')
+        ->name('document-requests.documents.download');
     Route::post('document-requests/{document_request}/send', [DocumentRequestController::class, 'send'])
         ->whereNumber('document_request')
         ->middleware('throttle:document-request-send')
