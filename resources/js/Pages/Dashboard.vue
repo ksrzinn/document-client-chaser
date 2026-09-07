@@ -46,23 +46,19 @@ function initials(name) {
         </PageHeader>
 
         <div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <div class="blueprint flex flex-col gap-1 rounded-card border border-divider bg-white p-4">
-                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="flex flex-col gap-1 rounded-card border border-divider bg-white p-4">
                 <span class="text-[11px] uppercase tracking-wide text-steel-600">Clients</span>
                 <span class="font-heading text-3xl leading-none text-ink">{{ stats.clients }}</span>
             </div>
-            <div class="blueprint flex flex-col gap-1 rounded-card border border-divider bg-white p-4">
-                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="flex flex-col gap-1 rounded-card border border-divider bg-white p-4">
                 <span class="text-[11px] uppercase tracking-wide text-steel-600">Active requests</span>
                 <span class="font-heading text-3xl leading-none text-ink">{{ stats.activeRequests }}</span>
             </div>
-            <div class="blueprint flex flex-col gap-1 rounded-card border border-divider bg-white p-4">
-                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="flex flex-col gap-1 rounded-card border border-divider bg-white p-4">
                 <span class="text-[11px] uppercase tracking-wide text-steel-600">Pending documents</span>
                 <span class="font-heading text-3xl leading-none text-[#8a5a12]">{{ stats.pendingDocuments }}</span>
             </div>
-            <div class="blueprint flex flex-col gap-1 rounded-card border border-divider bg-white p-4">
-                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="flex flex-col gap-1 rounded-card border border-divider bg-white p-4">
                 <span class="text-[11px] uppercase tracking-wide text-steel-600">Completed</span>
                 <span class="font-heading text-3xl leading-none text-ink">{{ stats.completed }}</span>
             </div>
