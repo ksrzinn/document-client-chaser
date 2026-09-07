@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import StatusTag from '@/Components/StatusTag.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -31,41 +32,35 @@ const archive = () => {
 </script>
 
 <template>
-    <Head :title="client.name" />
+    <Head :title="props.client.name" />
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                {{ client.name }}
-            </h2>
+            <h2 class="font-heading text-xl text-ink">{{ props.client.name }}</h2>
         </template>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-xl sm:px-6 lg:px-8">
-                <div class="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
-                    <dl class="space-y-4">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Name</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ client.name }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Email</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ client.email }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Status</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                {{ client.archived_at ? 'Archived' : 'Active' }}
-                            </dd>
-                        </div>
-                    </dl>
+        <div class="mx-auto max-w-[640px]">
+            <Link :href="route('clients.index')" class="mb-4 inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-900">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 6l-6 6 6 6" /></svg>
+                Clients
+            </Link>
 
-                    <div class="mt-6 flex items-center gap-4">
-                        <Link :href="route('clients.edit', client.id)">
+            <div class="rounded-card border border-divider bg-white p-5">
+                <div class="flex flex-wrap items-start gap-4">
+                    <span class="grid h-14 w-14 flex-none place-items-center rounded-card bg-accent-100 font-heading text-xl text-accent-800">
+                        {{ props.client.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase() }}
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <h1 class="font-heading text-2xl text-ink">{{ props.client.name }}</h1>
+                        <p class="mt-1 break-all text-sm text-steel-700">{{ props.client.email }}</p>
+                        <StatusTag class="mt-2" :label="props.client.archived_at ? 'Archived' : 'Active'" />
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <Link :href="route('clients.edit', props.client.id)">
                             <SecondaryButton type="button">Edit</SecondaryButton>
                         </Link>
                         <PrimaryButton
-                            v-if="!client.archived_at"
+                            v-if="!props.client.archived_at"
                             type="button"
                             :disabled="archiveForm.processing"
                             @click="openArchiveConfirm"
@@ -76,16 +71,16 @@ const archive = () => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
 
-    <ConfirmDialog
-        :show="confirmingArchive"
-        title="Archive this client?"
-        body="Their document requests will remain but the client can no longer be edited."
-        confirm-label="Archive"
-        danger
-        :processing="archiveForm.processing"
-        @confirm="archive"
-        @cancel="confirmingArchive = false"
-    />
+        <ConfirmDialog
+            :show="confirmingArchive"
+            title="Archive this client?"
+            body="Their document requests will remain but the client can no longer be edited."
+            confirm-label="Archive"
+            danger
+            :processing="archiveForm.processing"
+            @confirm="archive"
+            @cancel="confirmingArchive = false"
+        />
+    </AuthenticatedLayout>
 </template>
