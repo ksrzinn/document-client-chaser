@@ -32,10 +32,6 @@ function initials(name) {
     <Head title="Dashboard" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-heading text-xl text-ink">Dashboard</h2>
-        </template>
-
         <PageHeader title="Dashboard">
             Here's what's happening with your document requests.
             <template #actions>

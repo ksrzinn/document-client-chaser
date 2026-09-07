@@ -1,4 +1,6 @@
 <script setup>
+import Card from '@/Components/Card.vue';
+
 defineProps({
     clientName: {
         type: String,
@@ -30,7 +32,7 @@ defineProps({
 <template>
     <aside class="rounded-card border border-dashed border-accent-400 bg-accent-100 p-5">
         <span class="text-[11px] uppercase tracking-wide text-accent-800">What your client receives</span>
-        <div class="mt-3.5 rounded-card border border-divider bg-white p-[18px]">
+        <Card class="mt-3.5 p-[18px]">
             <div class="flex items-center gap-2 border-b border-divider pb-3.5">
                 <span class="grid h-[22px] w-[22px] place-items-center rounded border border-accent text-accent">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg>
@@ -52,7 +54,7 @@ defineProps({
                 <span><span class="block text-[11px] uppercase tracking-wide text-steel-600">Due</span><span class="text-sm">{{ dueAt || '—' }}</span></span>
                 <span><span class="block text-[11px] uppercase tracking-wide text-steel-600">Expires</span><span class="text-sm">{{ expiresAt || '—' }}</span></span>
             </div>
-        </div>
+        </Card>
         <p class="mt-3.5 text-xs leading-relaxed text-accent-800">Nothing is sent yet. You can review and send the request from its detail page.</p>
     </aside>
 </template>

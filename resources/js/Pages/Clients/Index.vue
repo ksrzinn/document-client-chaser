@@ -4,6 +4,7 @@ import PageHeader from '@/Components/PageHeader.vue';
 import EmptyState from '@/Components/EmptyState.vue';
 import StatusTag from '@/Components/StatusTag.vue';
 import Pagination from '@/Components/Pagination.vue';
+import Card from '@/Components/Card.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
 defineProps({
@@ -22,10 +23,6 @@ function initials(name) {
     <Head title="Clients" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-heading text-xl text-ink">Clients</h2>
-        </template>
-
         <PageHeader title="Clients">
             {{ clients.data.length }} client{{ clients.data.length === 1 ? '' : 's' }}
             <template #actions>
@@ -48,7 +45,7 @@ function initials(name) {
             </template>
         </EmptyState>
 
-        <div v-else class="rounded-card border border-divider bg-white">
+        <Card v-else>
             <div class="hidden overflow-x-auto md:block">
                 <table class="w-full min-w-[520px] text-sm">
                     <thead>
@@ -94,6 +91,6 @@ function initials(name) {
             </div>
 
             <Pagination :links="clients.links" />
-        </div>
+        </Card>
     </AuthenticatedLayout>
 </template>

@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import Card from '@/Components/Card.vue';
 import StatusTag from '@/Components/StatusTag.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -35,17 +36,13 @@ const archive = () => {
     <Head :title="props.client.name" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-heading text-xl text-ink">{{ props.client.name }}</h2>
-        </template>
-
         <div class="mx-auto max-w-[640px]">
             <Link :href="route('clients.index')" class="mb-4 inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-900">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 6l-6 6 6 6" /></svg>
                 Clients
             </Link>
 
-            <div class="rounded-card border border-divider bg-white p-5">
+            <Card class="p-5">
                 <div class="flex flex-wrap items-start gap-4">
                     <span class="grid h-14 w-14 flex-none place-items-center rounded-card bg-accent-100 font-heading text-xl text-accent-800">
                         {{ props.client.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase() }}
@@ -69,7 +66,7 @@ const archive = () => {
                         </PrimaryButton>
                     </div>
                 </div>
-            </div>
+            </Card>
         </div>
 
         <ConfirmDialog

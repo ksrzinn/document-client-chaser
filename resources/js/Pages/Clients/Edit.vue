@@ -29,10 +29,6 @@ const submit = () => {
     <Head title="Edit Client" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-heading text-xl text-ink">Edit client</h2>
-        </template>
-
         <div class="mx-auto max-w-[520px]">
             <Link :href="route('clients.show', props.client.id)" class="mb-4 inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-900">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 6l-6 6 6 6" /></svg>

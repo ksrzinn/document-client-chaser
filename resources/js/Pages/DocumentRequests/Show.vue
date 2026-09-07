@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import Card from '@/Components/Card.vue';
 import StatusTag from '@/Components/StatusTag.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
@@ -76,17 +77,13 @@ const copyLink = () => {
     <Head title="Document Request" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-heading text-xl text-ink">{{ documentRequest.client.name }}</h2>
-        </template>
-
         <div class="mx-auto max-w-[900px]">
             <Link :href="route('document-requests.index')" class="mb-3.5 inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-900">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 6l-6 6 6 6" /></svg>
                 Document requests
             </Link>
 
-            <div class="mb-4 rounded-card border border-divider bg-white p-5">
+            <Card class="mb-4 p-5">
                 <div class="flex flex-wrap items-start gap-3.5">
                     <div class="min-w-0 flex-1 basis-[220px]">
                         <div class="mb-2 flex items-center gap-2.5">
@@ -113,9 +110,9 @@ const copyLink = () => {
                 <p v-if="documentRequest.display_status === 'archived'" class="mt-4 rounded-control border border-steel-300 bg-steel-100 p-3 text-sm leading-relaxed text-steel-800">
                     This request is archived. The secure link no longer works and the client can't submit documents. You can still edit it.
                 </p>
-            </div>
+            </Card>
 
-            <div v-if="documentRequest.display_status !== 'archived'" class="mb-4 rounded-card border border-divider bg-white p-[18px]">
+            <Card v-if="documentRequest.display_status !== 'archived'" class="mb-4 p-[18px]">
                 <span class="mb-2.5 block text-[11px] uppercase tracking-wide text-steel-600">Secure link</span>
                 <div class="flex flex-wrap items-center gap-2.5">
                     <input
@@ -134,7 +131,7 @@ const copyLink = () => {
                 <p v-if="$page.props.flash.accessLinkExists && !copiedLink" class="mt-2 text-xs text-steel-600">
                     A secure link already exists for this request.
                 </p>
-            </div>
+            </Card>
 
             <div class="flex flex-wrap items-start gap-4">
                 <section class="min-w-0 flex-1 basis-[340px] overflow-hidden rounded-card border border-divider bg-white">

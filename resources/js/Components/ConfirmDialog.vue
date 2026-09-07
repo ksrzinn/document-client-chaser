@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
+import Card from '@/Components/Card.vue';
 
 const props = defineProps({
     show: {
@@ -47,11 +48,11 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown));
             class="fixed inset-0 z-50 flex items-center justify-center bg-[#1d2d3d]/55 p-4"
             @click.self="emit('cancel')"
         >
-            <div
+            <Card
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="confirm-dialog-title"
-                class="w-full max-w-[440px] rounded-card border border-divider bg-white p-5 shadow-lg"
+                class="w-full max-w-[440px] p-5 shadow-lg"
             >
                 <h2 id="confirm-dialog-title" class="font-heading text-xl text-ink">{{ title }}</h2>
                 <p class="mt-2 text-sm leading-relaxed text-steel-700">{{ body }}</p>
@@ -73,7 +74,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown));
                         {{ confirmLabel }}
                     </button>
                 </div>
-            </div>
+            </Card>
         </div>
     </Teleport>
 </template>

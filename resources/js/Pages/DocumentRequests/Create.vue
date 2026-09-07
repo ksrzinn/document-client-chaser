@@ -42,10 +42,6 @@ const selectedClient = computed(() => props.clients.find((c) => String(c.id) ===
     <Head title="New Document Request" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-heading text-xl text-ink">New Document Request</h2>
-        </template>
-
         <EmptyState
             v-if="clients.length === 0"
             title="You need a client first"
