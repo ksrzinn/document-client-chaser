@@ -64,6 +64,10 @@ const submit = () => {
             </label>
 
             <PrimaryButton class="w-full" :disabled="form.processing">Log in</PrimaryButton>
+
+            <p class="text-center text-sm text-steel-700">
+                Don't have an account? <Link :href="route('register')" class="text-accent-700 hover:text-accent-900">Create your account</Link>
+            </p>
         </form>
     </GuestLayout>
 </template>
