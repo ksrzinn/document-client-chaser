@@ -113,14 +113,23 @@ const copyLink = () => {
                         <Link :href="route('document-requests.edit', documentRequest.id)">
                             <SecondaryButton type="button">Edit</SecondaryButton>
                         </Link>
-                        <template v-if="documentRequest.display_status !== 'archived'">
-                            <SecondaryButton type="button" class="!text-[#9a3324]" :disabled="archiveForm.processing" @click="openArchiveConfirm">
-                                Archive
-                            </SecondaryButton>
-                            <PrimaryButton type="button" :disabled="sendForm.processing" @click="openSendConfirm">
-                                {{ documentRequest.sent_at ? 'Resend' : 'Send request' }}
-                            </PrimaryButton>
-                        </template>
+                        <SecondaryButton
+                            v-if="documentRequest.display_status !== 'archived'"
+                            type="button"
+                            class="!text-[#9a3324]"
+                            :disabled="archiveForm.processing"
+                            @click="openArchiveConfirm"
+                        >
+                            Archive
+                        </SecondaryButton>
+                        <PrimaryButton
+                            v-if="!['archived', 'completed'].includes(documentRequest.display_status)"
+                            type="button"
+                            :disabled="sendForm.processing"
+                            @click="openSendConfirm"
+                        >
+                            {{ documentRequest.sent_at ? 'Resend' : 'Send request' }}
+                        </PrimaryButton>
                     </div>
                 </div>
                 <p v-if="documentRequest.display_status === 'archived'" class="mt-4 rounded-control border border-steel-300 bg-steel-100 p-3 text-sm leading-relaxed text-steel-800">
@@ -128,7 +137,7 @@ const copyLink = () => {
                 </p>
             </Card>
 
-            <Card v-if="documentRequest.display_status !== 'archived'" class="mb-4 p-[18px]">
+            <Card v-if="!['archived', 'completed'].includes(documentRequest.display_status)" class="mb-4 p-[18px]">
                 <span class="mb-2.5 block text-[11px] uppercase tracking-wide text-steel-600">Secure link</span>
                 <div class="flex flex-wrap items-center gap-2.5">
                     <input
