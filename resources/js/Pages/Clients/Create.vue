@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import Card from '@/Components/Card.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -22,54 +23,38 @@ const submit = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                New Client
-            </h2>
+            <h2 class="font-heading text-xl text-ink">New client</h2>
         </template>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-xl sm:px-6 lg:px-8">
-                <div class="overflow-hidden bg-white p-6 shadow-sm sm:rounded-lg">
-                    <form @submit.prevent="submit">
-                        <div>
-                            <InputLabel for="name" value="Name" />
-                            <TextInput
-                                id="name"
-                                type="text"
-                                class="mt-1 block w-full"
-                                v-model="form.name"
-                                required
-                                autofocus
-                            />
-                            <InputError class="mt-2" :message="form.errors.name" />
-                        </div>
+        <div class="mx-auto max-w-[520px]">
+            <Link :href="route('clients.index')" class="mb-4 inline-flex items-center gap-1.5 text-sm text-accent-700 hover:text-accent-900">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M15 6l-6 6 6 6" /></svg>
+                Clients
+            </Link>
+            <Card class="p-6">
+                <h1 class="font-heading text-2xl text-ink">New client</h1>
+                <form @submit.prevent="submit" class="mt-5 flex flex-col gap-4">
+                    <div>
+                        <InputLabel for="name" value="Client name" />
+                        <TextInput id="name" type="text" class="mt-1" v-model="form.name" required autofocus />
+                        <InputError class="mt-2" :message="form.errors.name" />
+                    </div>
 
-                        <div class="mt-4">
-                            <InputLabel for="email" value="Email" />
-                            <TextInput
-                                id="email"
-                                type="email"
-                                class="mt-1 block w-full"
-                                v-model="form.email"
-                                required
-                            />
-                            <InputError class="mt-2" :message="form.errors.email" />
-                        </div>
+                    <div>
+                        <InputLabel for="email" value="Email" />
+                        <TextInput id="email" type="email" class="mt-1" v-model="form.email" required />
+                        <InputError class="mt-2" :message="form.errors.email" />
+                        <p v-if="!form.errors.email" class="mt-1.5 text-xs text-steel-600">Secure links and reminders are sent here.</p>
+                    </div>
 
-                        <div class="mt-4 flex items-center justify-end gap-4">
-                            <Link :href="route('clients.index')">
-                                <SecondaryButton type="button">Cancel</SecondaryButton>
-                            </Link>
-
-                            <PrimaryButton
-                                :disabled="form.processing"
-                            >
-                                Create Client
-                            </PrimaryButton>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                    <div class="mt-2 flex items-center justify-end gap-3">
+                        <Link :href="route('clients.index')">
+                            <SecondaryButton type="button">Cancel</SecondaryButton>
+                        </Link>
+                        <PrimaryButton :disabled="form.processing">Create client</PrimaryButton>
+                    </div>
+                </form>
+            </Card>
         </div>
     </AuthenticatedLayout>
 </template>
