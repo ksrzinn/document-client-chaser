@@ -14,7 +14,7 @@ const drawerOpen = ref(false);
 
             <div class="flex min-w-0 flex-1 flex-col">
                 <header class="sticky top-0 z-20 flex items-center gap-3 border-b border-divider bg-white/90 px-4 py-3 backdrop-blur md:hidden">
-                    <span class="grid h-6.5 w-6.5 place-items-center rounded-control border border-accent text-accent">
+                    <span class="grid h-[26px] w-[26px] place-items-center rounded-control border border-accent text-accent">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M8.5 14l2 2 4-4.5" /></svg>
                     </span>
                     <span class="mr-auto font-heading text-base uppercase tracking-wide text-ink">Document Chaser</span>

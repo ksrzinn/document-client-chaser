@@ -44,7 +44,7 @@ const navLinkClass = (active) => [
                 class="flex w-full items-center gap-2.5 rounded-control p-2 text-left hover:bg-steel-100"
                 @click="userMenuOpen = !userMenuOpen"
             >
-                <span class="grid h-8.5 w-8.5 flex-none place-items-center rounded-control bg-accent-100 font-heading text-sm text-accent-800">
+                <span class="grid h-[34px] w-[34px] flex-none place-items-center rounded-control bg-accent-100 font-heading text-sm text-accent-800">
                     {{ initials(page.props.auth.user.name) }}
                 </span>
                 <span class="min-w-0 flex-1">
