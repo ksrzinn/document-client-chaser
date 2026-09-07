@@ -1,6 +1,8 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
+import PageHeader from '@/Components/PageHeader.vue';
+import EmptyState from '@/Components/EmptyState.vue';
+import StatusTag from '@/Components/StatusTag.vue';
 import Pagination from '@/Components/Pagination.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
@@ -10,6 +12,10 @@ defineProps({
         required: true,
     },
 });
+
+function initials(name) {
+    return name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
+}
 </script>
 
 <template>
@@ -17,55 +23,77 @@ defineProps({
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                    Clients
-                </h2>
-                <Link :href="route('clients.create')">
-                    <PrimaryButton type="button">New Client</PrimaryButton>
-                </Link>
-            </div>
+            <h2 class="font-heading text-xl text-ink">Clients</h2>
         </template>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div v-if="clients.data.length === 0" class="overflow-hidden bg-white p-8 text-center shadow-sm sm:rounded-lg">
-                    <h3 class="text-sm font-medium text-gray-900">No clients yet</h3>
-                    <p class="mt-1 text-sm text-gray-500">Add your first client to start sending document requests.</p>
-                    <Link :href="route('clients.create')" class="mt-4 inline-block">
-                        <PrimaryButton type="button">Add your first client</PrimaryButton>
-                    </Link>
-                </div>
-                <div v-else class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead>
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Email</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                    <th class="px-6 py-3"></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <tr v-for="client in clients.data" :key="client.id">
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{{ client.name }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ client.email }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                        {{ client.archived_at ? 'Archived' : 'Active' }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                        <Link :href="route('clients.show', client.id)" class="text-indigo-600 hover:text-indigo-900">
-                                            View
-                                        </Link>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <Pagination :links="clients.links" />
-                </div>
+        <PageHeader title="Clients">
+            {{ clients.data.length }} client{{ clients.data.length === 1 ? '' : 's' }}
+            <template #actions>
+                <Link :href="route('clients.create')" class="inline-flex min-h-[44px] items-center gap-2 rounded-control bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-600">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
+                    New client
+                </Link>
+            </template>
+        </PageHeader>
+
+        <EmptyState
+            v-if="clients.data.length === 0"
+            title="No clients yet"
+            description="Add your first client to start sending document requests."
+        >
+            <template #action>
+                <Link :href="route('clients.create')" class="inline-flex min-h-[44px] items-center rounded-control bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-600">
+                    Add client
+                </Link>
+            </template>
+        </EmptyState>
+
+        <div v-else class="rounded-card border border-divider bg-white">
+            <div class="hidden overflow-x-auto md:block">
+                <table class="w-full min-w-[520px] text-sm">
+                    <thead>
+                        <tr class="border-b border-divider text-left text-xs uppercase tracking-wide text-steel-600">
+                            <th class="px-4 py-3 font-medium">Client</th>
+                            <th class="px-4 py-3 font-medium">Email</th>
+                            <th class="px-4 py-3 font-medium">Status</th>
+                            <th class="px-4 py-3 text-right font-medium">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="client in clients.data" :key="client.id" class="border-b border-divider last:border-b-0 hover:bg-steel-100/50">
+                            <td class="px-4 py-3.5">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="grid h-8 w-8 flex-none place-items-center rounded-control bg-accent-100 font-heading text-sm text-accent-800">{{ initials(client.name) }}</span>
+                                    <Link :href="route('clients.show', client.id)" class="font-medium text-ink hover:text-accent-700">{{ client.name }}</Link>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3.5 text-steel-700">{{ client.email }}</td>
+                            <td class="px-4 py-3.5"><StatusTag :label="client.archived_at ? 'Archived' : 'Active'" /></td>
+                            <td class="px-4 py-3.5 text-right">
+                                <Link :href="route('clients.show', client.id)" class="text-sm text-accent-700 hover:text-accent-900">View</Link>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
+
+            <div class="flex flex-col gap-2.5 p-3 md:hidden">
+                <Link
+                    v-for="client in clients.data"
+                    :key="client.id"
+                    :href="route('clients.show', client.id)"
+                    class="flex min-h-[44px] items-center gap-3 rounded-card border border-divider p-3.5"
+                >
+                    <span class="grid h-10 w-10 flex-none place-items-center rounded-control bg-accent-100 font-heading text-base text-accent-800">{{ initials(client.name) }}</span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate text-[15px] font-medium text-ink">{{ client.name }}</span>
+                        <span class="block truncate text-xs text-steel-600">{{ client.email }}</span>
+                        <StatusTag class="mt-1" :label="client.archived_at ? 'Archived' : 'Active'" />
+                    </span>
+                </Link>
+            </div>
+
+            <Pagination :links="clients.links" />
         </div>
     </AuthenticatedLayout>
 </template>
