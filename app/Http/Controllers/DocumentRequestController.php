@@ -205,7 +205,7 @@ class DocumentRequestController extends Controller
 
         return $disk->download(
             $document->storage_path,
-            basename($document->original_filename),
+            basename(str_replace('\\', '/', $document->original_filename)),
             [
                 'Content-Type' => $document->mime_type ?: 'application/octet-stream',
                 'X-Content-Type-Options' => 'nosniff',

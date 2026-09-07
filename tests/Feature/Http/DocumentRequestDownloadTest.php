@@ -158,3 +158,36 @@ it('never exposes the physical storage path in the response', function () {
     expect($response->headers->get('content-disposition'))->not->toContain(storage_path());
     expect($response->headers->get('content-disposition'))->not->toContain($document->storage_path);
 });
+
+it('sets the nosniff content type options header', function () {
+    [$user, $documentRequest, $document] = makeDownloadableDocument();
+
+    $response = $this->actingAs($user)
+        ->get(route('document-requests.documents.download', [$documentRequest, $document]));
+
+    $response->assertHeader('x-content-type-options', 'nosniff');
+});
+
+it('sanitizes a path-traversal-shaped original filename before it reaches the download header', function () {
+    [$user, $documentRequest, $document] = makeDownloadableDocument([
+        'original_filename' => '../../etc/passwd',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->get(route('document-requests.documents.download', [$documentRequest, $document]));
+
+    $response->assertOk();
+    $response->assertHeader('content-disposition', 'attachment; filename=passwd');
+});
+
+it('sanitizes a backslash-containing original filename before it reaches the download header', function () {
+    [$user, $documentRequest, $document] = makeDownloadableDocument([
+        'original_filename' => 'a\\b.pdf',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->get(route('document-requests.documents.download', [$documentRequest, $document]));
+
+    $response->assertOk();
+    $response->assertHeader('content-disposition', 'attachment; filename=b.pdf');
+});
