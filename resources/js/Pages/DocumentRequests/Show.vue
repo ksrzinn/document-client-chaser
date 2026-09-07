@@ -8,6 +8,7 @@ import StatusTag from '@/Components/StatusTag.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { formatDateTime } from '@/format.js';
+import { pushToast } from '@/toast.js';
 
 const props = defineProps({
     documentRequest: {
@@ -68,7 +69,9 @@ const copyLink = () => {
     // session) — re-copy it directly. Hitting access-link again would
     // return "accessLinkExists" with no link, wiping out what we have.
     if (copiedLink.value) {
-        navigator.clipboard?.writeText(copiedLink.value).catch(() => {});
+        navigator.clipboard?.writeText(copiedLink.value)
+            .then(() => pushToast('Link copied to clipboard.'))
+            .catch(() => {});
         return;
     }
 
@@ -77,7 +80,9 @@ const copyLink = () => {
         onSuccess: () => {
             copiedLink.value = usePage().props.flash.accessLink ?? null;
             if (copiedLink.value) {
-                navigator.clipboard?.writeText(copiedLink.value).catch(() => {});
+                navigator.clipboard?.writeText(copiedLink.value)
+                    .then(() => pushToast('Link copied to clipboard.'))
+                    .catch(() => {});
             }
         },
     });
