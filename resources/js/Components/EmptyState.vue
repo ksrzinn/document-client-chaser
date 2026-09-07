@@ -15,7 +15,7 @@ defineProps({
     <div class="flex flex-col items-center gap-2.5 rounded-card border border-divider bg-white px-6 py-14 text-center">
         <span
             v-if="$slots.icon"
-            class="grid h-13 w-13 place-items-center rounded-card border border-accent-300 bg-accent-100 text-accent-700"
+            class="grid h-[52px] w-[52px] place-items-center rounded-card border border-accent-300 bg-accent-100 text-accent-700"
         >
             <slot name="icon" />
         </span>
