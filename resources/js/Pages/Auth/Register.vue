@@ -36,7 +36,16 @@ const submit = () => {
 
             <div>
                 <InputLabel for="email" value="Email" />
-                <TextInput id="email" type="email" class="mt-1" v-model="form.email" required autocomplete="username" />
+                <TextInput
+                    id="email"
+                    type="email"
+                    class="mt-1"
+                    v-model="form.email"
+                    required
+                    autocomplete="username"
+                    pattern="[^@\s]+@[^@\s]+\.[^@\s]+"
+                    title="Enter a valid email address (e.g. name@example.com)"
+                />
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
