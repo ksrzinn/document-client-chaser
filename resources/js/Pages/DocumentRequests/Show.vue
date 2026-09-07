@@ -182,7 +182,7 @@ const copyLink = () => {
                             <a
                                 :href="route('document-requests.documents.download', [documentRequest.id, document.id])"
                                 class="flex-none inline-flex items-center gap-1 rounded-control px-2 py-1 text-xs font-medium text-accent-700 hover:bg-white hover:text-accent-900"
-                                aria-label="`Download ${document.original_filename}`"
+                                :aria-label="`Download ${document.original_filename}`"
                             >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" /></svg>
                                 Download
