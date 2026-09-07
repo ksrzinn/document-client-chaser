@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -64,6 +65,7 @@ class DocumentRequest extends Model
         $token = Str::random(40);
 
         $this->access_token_hash = hash('sha256', $token);
+        $this->access_token_encrypted = Crypt::encryptString($token);
         $this->save();
 
         return $token;
@@ -74,9 +76,27 @@ class DocumentRequest extends Model
         $token = Str::random(40);
 
         $this->access_token_hash = hash('sha256', $token);
+        $this->access_token_encrypted = Crypt::encryptString($token);
         $this->save();
 
         return $token;
+    }
+
+    /**
+     * The secure client-upload URL for the currently persisted token, or null
+     * if no token has been generated yet or the request is no longer publicly
+     * accessible (archived/expired). Purely derived from stored state — never
+     * generates or rotates a token.
+     */
+    public function currentAccessLink(): ?string
+    {
+        if ($this->access_token_encrypted === null || ! $this->isPubliclyAccessible()) {
+            return null;
+        }
+
+        $token = Crypt::decryptString($this->access_token_encrypted);
+
+        return route('public.document-request.show', $token);
     }
 
     public function isPubliclyAccessible(): bool

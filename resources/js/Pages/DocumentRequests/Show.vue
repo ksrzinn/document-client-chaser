@@ -53,34 +53,36 @@ const openSendConfirm = () => {
 const send = () => {
     sendForm.post(route('document-requests.send', props.documentRequest.id), {
         preserveScroll: true,
-        onSuccess: () => {
-            copiedLink.value = usePage().props.flash.accessLink ?? null;
-        },
         onFinish: () => {
             confirmingSend.value = false;
         },
     });
 };
 
+// The existing link, straight from persisted request data — survives
+// refresh/navigation because it's a real prop, not session flash.
+const existingLink = computed(() => props.documentRequest.access_link);
+
 const copyLinkForm = useForm({});
-const copiedLink = ref(null);
+const generatedLink = ref(null);
 const copyLink = () => {
-    // The link is already known locally (e.g. just sent/resent in this
-    // session) — re-copy it directly. Hitting access-link again would
-    // return "accessLinkExists" with no link, wiping out what we have.
-    if (copiedLink.value) {
-        navigator.clipboard?.writeText(copiedLink.value)
+    // An existing valid link is already persisted — copy it client-side only.
+    // Never hit the network to re-fetch or regenerate a link that already exists.
+    if (existingLink.value) {
+        navigator.clipboard?.writeText(existingLink.value)
             .then(() => pushToast('Link copied to clipboard.'))
             .catch(() => {});
         return;
     }
 
+    // No link has ever been generated for this request yet — lazily generate
+    // one (without sending an email) and copy it.
     copyLinkForm.post(route('document-requests.access-link', props.documentRequest.id), {
         preserveScroll: true,
         onSuccess: () => {
-            copiedLink.value = usePage().props.flash.accessLink ?? null;
-            if (copiedLink.value) {
-                navigator.clipboard?.writeText(copiedLink.value)
+            generatedLink.value = usePage().props.flash.accessLink ?? null;
+            if (generatedLink.value) {
+                navigator.clipboard?.writeText(generatedLink.value)
                     .then(() => pushToast('Link copied to clipboard.'))
                     .catch(() => {});
             }
@@ -143,7 +145,7 @@ const copyLink = () => {
                     <input
                         type="text"
                         readonly
-                        :value="copiedLink ?? ''"
+                        :value="existingLink ?? generatedLink ?? ''"
                         placeholder="Copy the link to see it here"
                         aria-label="Secure upload link"
                         class="min-h-[44px] flex-1 basis-[240px] rounded-control border-divider bg-canvas text-sm text-steel-800"
@@ -153,9 +155,6 @@ const copyLink = () => {
                         Copy link
                     </PrimaryButton>
                 </div>
-                <p v-if="$page.props.flash.accessLinkExists && !copiedLink" class="mt-2 text-xs text-steel-600">
-                    A secure link already exists for this request.
-                </p>
             </Card>
 
             <div class="flex flex-wrap items-start gap-4">
