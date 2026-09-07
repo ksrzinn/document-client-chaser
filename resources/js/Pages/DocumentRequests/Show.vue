@@ -64,6 +64,14 @@ const send = () => {
 const copyLinkForm = useForm({});
 const copiedLink = ref(null);
 const copyLink = () => {
+    // The link is already known locally (e.g. just sent/resent in this
+    // session) — re-copy it directly. Hitting access-link again would
+    // return "accessLinkExists" with no link, wiping out what we have.
+    if (copiedLink.value) {
+        navigator.clipboard?.writeText(copiedLink.value).catch(() => {});
+        return;
+    }
+
     copyLinkForm.post(route('document-requests.access-link', props.documentRequest.id), {
         preserveScroll: true,
         onSuccess: () => {
