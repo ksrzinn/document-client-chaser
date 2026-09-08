@@ -38,3 +38,7 @@ COPY --from=assets --chown=app:app /app/public/build ./public/build
 USER app
 EXPOSE 9000
 CMD ["php-fpm"]
+
+FROM nginx:1.27-alpine AS nginx
+COPY --from=app /var/www/html/public /var/www/html/public
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
