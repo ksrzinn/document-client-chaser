@@ -21,13 +21,14 @@ ARG UID=1000
 ARG GID=1000
 RUN addgroup -g ${GID} app && adduser -D -u ${UID} -G app app
 
-RUN apk add --no-cache postgresql-client icu-dev libzip-dev libpng-dev
+RUN apk add --no-cache postgresql-client icu-dev libzip-dev libpng-dev fcgi
 
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 RUN install-php-extensions pdo_pgsql pgsql redis bcmath intl zip gd opcache pcntl
 
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/zz-opcache.ini
 COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/zz-uploads.ini
+COPY docker/php/fpm-ping.conf /usr/local/etc/php-fpm.d/zz-ping.conf
 
 WORKDIR /var/www/html
 COPY --chown=app:app . .
