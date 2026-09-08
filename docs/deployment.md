@@ -23,10 +23,15 @@ cp .env.production.example .env
 
 Edit `.env` and replace every `CHANGE_ME_*` placeholder:
 
-- `APP_KEY` — leave blank for now, generated in step 3.
+- `APP_KEY` — leave blank for now, generated in step 4 and pasted in
+  manually before step 5.
 - `APP_URL` — the VPS's public IP, e.g. `http://203.0.113.10`.
 - `DB_PASSWORD` — a strong random password (this also becomes the Postgres
-  container's password via `docker-compose.prod.yml`).
+  container's password via `docker-compose.prod.yml`). Avoid a literal `$`
+  character in the generated value: Docker Compose interpolates
+  `${DB_PASSWORD}` when setting `POSTGRES_PASSWORD`, while the same raw value
+  is passed to Laravel literally via `env_file` — a `$` can make the two
+  diverge, which then looks like a Postgres auth bug.
 - `MAIL_USERNAME` / `MAIL_PASSWORD` — Brevo SMTP credentials.
 - `MAIL_FROM_ADDRESS` — the sending address.
 
@@ -56,12 +61,23 @@ docker compose -f docker-compose.prod.yml ps
 ## 4. Generate the app key
 
 ```bash
-docker compose -f docker-compose.prod.yml run --rm app php artisan key:generate
+docker compose -f docker-compose.prod.yml run --rm --no-deps app php artisan key:generate --show
 ```
 
-This writes `APP_KEY` into `.env` on the host (bind-mounted `.env` via
-`env_file`, not the source tree — this is a one-off `run`, not a persistent
-container).
+This prints a `base64:...` value — it does **not** write anything back to
+`.env` on the host. `docker-compose.prod.yml` has no source bind-mount by
+design (that's the point of the production image), so there is no host
+`.env` file inside the container to write to; `env_file:` only injects
+variables into the container's environment, it does not mount the file. Copy
+the printed value and paste it into `.env` on the host yourself:
+
+```
+APP_KEY=base64:...
+```
+
+Do this **before** step 5 — starting the app with an empty `APP_KEY` makes
+Laravel throw "No application encryption key has been specified" on every
+request, including `/up`, so nginx's healthcheck never passes either.
 
 ## 5. Start the rest of the stack
 
@@ -127,8 +143,10 @@ docker compose -f docker-compose.prod.yml logs -f postgres
 docker compose -f docker-compose.prod.yml logs -f redis
 ```
 
-Laravel's own log is also inside the `app`/`worker`/`scheduler` containers at
-`storage/logs/laravel.log` if you need to `exec` in and inspect it directly.
+Laravel's own application-level logs (exceptions, stack traces — not just
+php-fpm/nginx access logs) flow directly to `docker compose logs app` /
+`worker` / `scheduler` via `LOG_CHANNEL=stderr`, so no `exec` is needed to
+read them.
 
 ## Restarting a service
 
@@ -151,6 +169,11 @@ restarts.
 git pull
 docker compose -f docker-compose.prod.yml build
 docker compose -f docker-compose.prod.yml up -d
+# nginx resolves the `app` hostname at its own boot, not per-request, so a
+# code-only redeploy can rebuild `app` (new container IP) with a byte-identical
+# `nginx` image left untouched — restart it here so it doesn't stay pointed
+# at a dead upstream.
+docker compose -f docker-compose.prod.yml restart nginx
 docker compose -f docker-compose.prod.yml exec app php artisan migrate --force
 docker compose -f docker-compose.prod.yml exec app php artisan config:cache
 docker compose -f docker-compose.prod.yml exec app php artisan route:cache
